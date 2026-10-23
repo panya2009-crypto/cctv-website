@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#06172e">
+<title>จัดการรูปภาพ | Advance Network</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#06172e;--navy2:#0b2849;--orange:#ff6a00;--blue:#168bff;--ink:#10223b;--muted:#64748b;--line:#e2e8f0;--bg:#f4f7fb;--green:#16835d;--red:#c2413b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:'Prompt',sans-serif;color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:10px 15px;font-weight:500}.primary{background:var(--orange);color:#fff}.secondary{background:#e8eef6;color:var(--navy)}.danger{background:#fee2e2;color:#991b1b}.hidden{display:none!important}.top{background:var(--navy);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px}.top strong{font-family:'Kanit';font-size:22px}.top a{color:#fff}.wrap{max-width:1100px;margin:28px auto;padding:0 18px}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 28px #071a2b0b;margin-bottom:20px}.panel h2{font-family:'Kanit';margin:0 0 14px;font-size:22px}.note{color:var(--muted);font-size:14px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-weight:500;font-size:14px}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:11px;background:#fff}.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.status{margin:12px 0;padding:11px 13px;border-radius:9px;background:#eff6ff;color:#1d4ed8;white-space:pre-wrap}.status.error{background:#fef2f2;color:#991b1b}.status.ok{background:#ecfdf5;color:#065f46}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}.item{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}.item img{width:100%;height:165px;object-fit:cover;background:#e2e8f0}.itembody{padding:13px}.itembody h3{font-size:16px;margin:0 0 5px;overflow-wrap:anywhere}.pill{display:inline-block;font-size:12px;border-radius:99px;padding:3px 9px;background:#f1f5f9;color:#334155;margin:3px 0 8px}.pill.on{background:#dcfce7;color:#166534}.pill.off{background:#fee2e2;color:#991b1b}.item .actions button{font-size:13px;padding:8px 10px}.check{display:flex;gap:8px;align-items:center;margin:12px 0}.check input{width:auto}.small{font-size:12px;color:var(--muted)}@media(max-width:640px){.row{grid-template-columns:1fr}.top{padding:14px 16px}.panel{padding:16px}.top strong{font-size:19px}}
+</style>
+</head>
+<body>
+<header class="top"><strong>Advance Network <span style="color:#ff6a00">/ จัดการรูปภาพ</span></strong><a href="./">กลับหน้าเว็บไซต์ ↗</a></header>
+<main class="wrap">
+<section id="configWarning" class="panel">
+<h2>ตั้งค่าการเชื่อมต่อครั้งแรก</h2>
+<p>หน้านี้เตรียมไว้สำหรับผู้ดูแล ใช้ Supabase Project URL และ <b>publishable/anon key</b> เท่านั้น ห้ามนำ service_role/secret key มาใส่ในเว็บไซต์</p>
+<div class="row">
+<div class="field"><label for="projectUrl">Supabase Project URL</label><input id="projectUrl" placeholder="https://YOUR-PROJECT.supabase.co"></div>
+<div class="field"><label for="anonKey">Publishable key (หรือ anon public key)</label><input id="anonKey" placeholder="sb_publishable_... หรือ eyJ..."></div>
+</div>
+<button id="saveConfig" class="primary">เชื่อมต่อ Supabase</button>
+<p class="note">ค่านี้จะถูกบันทึกในเบราว์เซอร์เครื่องนี้เท่านั้น หากยังไม่ได้ใส่ค่าจริง ระบบจะยังไม่เชื่อมต่อ</p>
+</section>
+<section id="loginPanel" class="panel hidden">
+<h2>เข้าสู่ระบบผู้ดูแล</h2>
+<p class="note">ใช้บัญชีอีเมลที่สร้างไว้ใน Supabase Authentication → Users</p>
+<form id="loginForm">
+<div class="field"><label for="email">อีเมล</label><input id="email" type="email" autocomplete="username" required></div>
+<div class="field"><label for="password">รหัสผ่าน</label><input id="password" type="password" autocomplete="current-password" required></div>
+<div class="actions"><button class="primary" type="submit">เข้าสู่ระบบ</button><button class="secondary" id="forgotBtn" type="button">ส่งลิงก์ตั้งรหัสผ่านใหม่</button></div>
+</form>
+<div id="loginStatus" class="status hidden" role="status"></div>
+</section>
+<section id="appPanel" class="hidden">
+<div class="panel">
+<div class="toolbar"><div><h2 style="margin-bottom:3px">คลังรูปภาพ</h2><div id="userLabel" class="note"></div></div><div class="actions"><button id="refreshBtn" class="secondary">รีเฟรช</button><button id="logoutBtn" class="secondary">ออกจากระบบ</button></div></div>
+<div id="appStatus" class="status hidden" role="status"></div>
+</div>
+<div class="panel">
+<h2 id="formTitle">เพิ่มรูปภาพใหม่</h2>
+<form id="imageForm">
+<input id="editId" type="hidden">
+<div class="row">
+<div class="field"><label for="title">ชื่อผลงาน *</label><input id="title" required maxlength="140" placeholder="เช่น ติดตั้งกล้องวงจรปิดสำนักงาน"></div>
+<div class="field"><label for="category">หมวดหมู่</label><select id="category"><option>CCTV</option><option>Network & Wi-Fi</option><option>Alarm</option><option>Access Control</option><option>ไม้กั้นรถยนต์</option><option>อื่น ๆ</option></select></div>
+</div>
+<div class="field"><label for="description">คำอธิบาย</label><textarea id="description" rows="2" maxlength="500" placeholder="รายละเอียดผลงาน (ไม่บังคับ)"></textarea></div>
+<div class="field"><label for="file">เลือกรูปจากคอมพิวเตอร์ <span class="small">(JPG, PNG, WebP; ไม่เกิน 5 MB)</span></label><input id="file" type="file" accept="image/jpeg,image/png,image/webp"></div>
+<div class="check"><input id="published" type="checkbox"><label for="published">เผยแพร่รูปบนเว็บไซต์</label></div>
+<div class="row"><div class="field"><label for="order">ลำดับแสดงผล</label><input id="order" type="number" value="0" min="0" max="9999"></div><div class="field"><label for="replacementNote">หมายเหตุ</label><input id="replacementNote" value="หากแก้ไขรายการเดิมโดยไม่เลือกไฟล์ รูปเดิมจะยังอยู่" disabled></div></div>
+<div class="actions"><button class="primary" type="submit" id="saveImageBtn">บันทึกข้อมูลรูป</button><button class="secondary" type="button" id="cancelEditBtn">ล้างฟอร์ม</button></div>
+</form>
+</div>
+<div class="panel">
+<div class="toolbar"><h2>รูปภาพทั้งหมด</h2><span id="countLabel" class="note">0 รายการ</span></div>
+<div id="imageGrid" class="grid"></div>
+</div>
+</section>
+</main>
+<script>
+(() => {
+  const PROJECT_URL = 'https://uqwubpdolhrxtavkuzvg.supabase.co';
+  const SUPABASE_PUBLIC_KEY = 'PASTE_YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY_HERE';
+  const BUCKET = 'portfolio-images';
+  const ADMIN_UID = '308c8555-b92e-461d-8911-d4c2bef01dfc';
+  const $ = id => document.getElementById(id);
+  let client = null;
+  let currentUser = null;
+  let rows = [];
+  const setStatus = (id, message, type='') => { const el=$(id); el.textContent=message; el.className='status'+(type?' '+type:''); el.classList.remove('hidden'); };
+  const clearStatus = id => { $(id).classList.add('hidden'); };
+  const configSaved = () => {
+    const url = localStorage.getItem('an_supabase_url') || PROJECT_URL;
+    const key = localStorage.getItem('an_supabase_key') || (SUPABASE_PUBLIC_KEY.includes('PASTE_YOUR') ? '' : SUPABASE_PUBLIC_KEY);
+    $('projectUrl').value = url;
+    $('anonKey').value = key;
+    return {url, key};
+  };
+  function initClient() {
+    const {url,key} = configSaved();
+    if (!url || !key || !window.supabase) {
+      $('loginPanel').classList.add('hidden');
+      $('configWarning').classList.remove('hidden');
+      return false;
+    }
+    client = window.supabase.createClient(url, key);
+    $('configWarning').classList.add('hidden');
+    $('loginPanel').classList.remove('hidden');
+    client.auth.getSession().then(({data}) => {
+      if (data.session) handleSession(data.session);
+    });
+    client.auth.onAuthStateChange((_event, session) => {
+      if (session) handleSession(session);
+      else { currentUser=null; $('appPanel').classList.add('hidden'); $('loginPanel').classList.remove('hidden'); }
+    });
+    return true;
+  }
+  function handleSession(session) {
+    currentUser = session.user;
+    if (currentUser.id !== ADMIN_UID) {
+      client.auth.signOut();
+      setStatus('loginStatus','บัญชีนี้ไม่มีสิทธิ์ผู้ดูแล กรุณาใช้บัญชีที่ได้รับอนุญาต','error');
+      return;
+    }
+    $('loginPanel').classList.add('hidden');
+    $('appPanel').classList.remove('hidden');
+    $('userLabel').textContent = 'เข้าสู่ระบบ: '+(currentUser.email || 'ผู้ดูแล');
+    loadImages();
+  }
+  $('saveConfig').addEventListener('click', () => {
+    const url=$('projectUrl').value.trim().replace(/\/$/,'');
+    const key=$('anonKey').value.trim();
+    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url) || !key) {
+      setStatus('loginStatus','กรุณากรอก Project URL และ publishable/anon key ให้ถูกต้อง','error');
+      $('loginPanel').classList.remove('hidden');
+      return;
+    }
+    localStorage.setItem('an_supabase_url',url);
+    localStorage.setItem('an_supabase_key',key);
+    initClient();
+  });
+  $('loginForm').addEventListener('submit', async e => {
+    e.preventDefault(); clearStatus('loginStatus');
+    if (!client) { setStatus('loginStatus','ยังไม่ได้เชื่อมต่อ Supabase','error'); return; }
+    const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+    if(error) setStatus('loginStatus','เข้าสู่ระบบไม่สำเร็จ: '+error.message,'error');
+  });
+  $('forgotBtn').addEventListener('click', async () => {
+    if(!client) return;
+    const email=$('email').value.trim();
+    if(!email){setStatus('loginStatus','กรอกอีเมลก่อนกดส่งลิงก์ตั้งรหัสผ่านใหม่','error');return;}
+    const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+    setStatus('loginStatus',error?'ส่งลิงก์ไม่สำเร็จ: '+error.message:'หากอีเมลนี้อยู่ในระบบ จะมีอีเมลสำหรับตั้งรหัสผ่านใหม่ส่งไปให้','');
+  });
+  $('logoutBtn').addEventListener('click', async () => { if(client) await client.auth.signOut(); });
+  $('refreshBtn').addEventListener('click', loadImages);
+  $('cancelEditBtn').addEventListener('click', resetForm);
+  function resetForm() {
+    $('imageForm').reset(); $('editId').value=''; $('order').value='0';
+    $('formTitle').textContent='เพิ่มรูปภาพใหม่'; $('saveImageBtn').textContent='บันทึกข้อมูลรูป'; $('file').required=false;
+  }
+  function publicUrl(path) { return client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl; }
+  async function loadImages() {
+    if(!client || !currentUser) return;
+    clearStatus('appStatus');
+    const {data,error}=await client.from('gallery_images').select('*').order('display_order',{ascending:true}).order('created_at',{ascending:false});
+    if(error){setStatus('appStatus','โหลดข้อมูลไม่สำเร็จ: '+error.message,'error');return;}
+    rows=data||[]; $('countLabel').textContent=rows.length+' รายการ';
+    const grid=$('imageGrid'); grid.replaceChildren();
+    if(!rows.length){grid.textContent='ยังไม่มีรูปภาพในรายการ';return;}
+    for(const row of rows){
+      const card=document.createElement('article');card.className='item';
+      const img=document.createElement('img');img.alt=row.title||'รูปผลงาน';img.loading='lazy';img.src=publicUrl(row.image_path);
+      const body=document.createElement('div');body.className='itembody';
+      const h=document.createElement('h3');h.textContent=row.title;
+      const cat=document.createElement('div');cat.className='small';cat.textContent=(row.category||'อื่น ๆ')+' · ลำดับ '+row.display_order;
+      const pill=document.createElement('span');pill.className='pill '+(row.is_published?'on':'off');pill.textContent=row.is_published?'เผยแพร่แล้ว':'ซ่อนอยู่';
+      const desc=document.createElement('p');desc.className='small';desc.textContent=row.description||'ไม่มีคำอธิบาย';
+      const actions=document.createElement('div');actions.className='actions';
+      const toggle=document.createElement('button');toggle.className=row.is_published?'secondary':'primary';toggle.textContent=row.is_published?'ซ่อนรูป':'เผยแพร่';toggle.addEventListener('click',()=>togglePublished(row));
+      const edit=document.createElement('button');edit.className='secondary';edit.textContent='แก้ไข';edit.addEventListener('click',()=>editRow(row));
+      const del=document.createElement('button');del.className='danger';del.textContent='ลบ';del.addEventListener('click',()=>deleteRow(row));
+      actions.append(toggle,edit,del);body.append(h,cat,pill,desc,actions);card.append(img,body);grid.append(card);
+    }
+  }
+  function editRow(row){
+    $('editId').value=row.id;$('title').value=row.title||'';$('description').value=row.description||'';$('category').value=row.category||'CCTV';$('published').checked=!!row.is_published;$('order').value=row.display_order||0;
+    $('file').value='';$('file').required=false;$('formTitle').textContent='แก้ไขรูปภาพ';$('saveImageBtn').textContent='บันทึกการแก้ไข';window.scrollTo({top:0,behavior:'smooth'});
+  }
+  $('imageForm').addEventListener('submit',async e=>{
+    e.preventDefault(); if(!client||!currentUser||currentUser.id!==ADMIN_UID)return;
+    clearStatus('appStatus');
+    const id=$('editId').value;const file=$('file').files[0];const title=$('title').value.trim();
+    if(file && (!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024)){setStatus('appStatus','ไฟล์ต้องเป็น JPG, PNG หรือ WebP และขนาดไม่เกิน 5 MB','error');return;}
+    let path=id?(rows.find(r=>r.id===id)?.image_path):null;let uploadedNew=false;
+    try{
+      if(file){
+        path=Date.now()+'-'+file.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-');
+        const {error:upErr}=await client.storage.from(BUCKET).upload(path,file,{upsert:false,contentType:file.type});
+        if(upErr)throw upErr;uploadedNew=true;
+      }
+      const payload={title,description:$('description').value.trim()||null,category:$('category').value,image_path:path,is_published:$('published').checked,display_order:Number($('order').value)||0};
+      if(id){
+        const {error}=await client.from('gallery_images').update(payload).eq('id',id);if(error)throw error;
+        if(uploadedNew && rows.find(r=>r.id===id)?.image_path){const {error:removeErr}=await client.storage.from(BUCKET).remove([rows.find(r=>r.id===id).image_path]);if(removeErr)console.warn('Old image cleanup failed',removeErr);}
+      }else{
+        if(!file)throw new Error('กรุณาเลือกไฟล์รูปภาพ');
+        const {error}=await client.from('gallery_images').insert(payload);if(error)throw error;
+      }
+      resetForm();setStatus('appStatus','บันทึกข้อมูลเรียบร้อย','ok');await loadImages();
+    }catch(err){
+      if(uploadedNew&&path)await client.storage.from(BUCKET).remove([path]);
+      setStatus('appStatus','บันทึกไม่สำเร็จ: '+(err.message||String(err)),'error');
+    }
+  });
+  async function togglePublished(row){
+    const {error}=await client.from('gallery_images').update({is_published:!row.is_published}).eq('id',row.id);
+    if(error){setStatus('appStatus','เปลี่ยนสถานะไม่สำเร็จ: '+error.message,'error');return;} await loadImages();
+  }
+  async function deleteRow(row){
+    if(!confirm('ยืนยันลบรายการ "'+row.title+'" และไฟล์รูปนี้หรือไม่?'))return;
+    const {error:dbErr}=await client.from('gallery_images').delete().eq('id',row.id);
+    if(dbErr){setStatus('appStatus','ลบข้อมูลไม่สำเร็จ: '+dbErr.message,'error');return;}
+    const {error:storageErr}=await client.storage.from(BUCKET).remove([row.image_path]);
+    if(storageErr){setStatus('appStatus','ลบรายการแล้ว แต่ลบไฟล์ไม่สำเร็จ: '+storageErr.message,'error');await loadImages();return;}
+    setStatus('appStatus','ลบรายการและไฟล์แล้ว','ok');await loadImages();
+  }
+  configSaved();
+  if(SUPABASE_PUBLIC_KEY && !SUPABASE_PUBLIC_KEY.includes('PASTE_YOUR')) initClient();
+})();
+</script>
+</body>
+</html>
