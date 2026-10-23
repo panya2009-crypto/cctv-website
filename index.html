@@ -113,18 +113,64 @@ document.getElementById('year').textContent=new Date().getFullYear();
       note.textContent = 'ผลงานกำลังทยอยเพิ่ม โปรดกลับมาเยี่ยมชมอีกครั้ง';
       return;
     }
-    grid.replaceChildren();
+    const imageUrl = item => SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + item.image_path.split('/').map(encodeURIComponent).join('/');
+    // Group records with the same title into one project card.
+    const groups = new Map();
     for (const item of items) {
-      const article = document.createElement('article'); article.className = 'project';
-      const img = document.createElement('img');
-      img.src = SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + item.image_path.split('/').map(encodeURIComponent).join('/');
-      img.alt = item.title || 'ผลงาน Advance Network'; img.loading = 'lazy';
-      const body = document.createElement('div'); body.className = 'project-body';
-      const h = document.createElement('h3'); h.textContent = item.title || 'ผลงานติดตั้ง';
-      const p = document.createElement('p'); p.textContent = item.description || item.category || 'ผลงานติดตั้ง Advance Network';
-      body.append(h,p); article.append(img,body); grid.append(article);
+      const key = (item.title || 'ผลงานติดตั้ง').trim();
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
     }
-    note.textContent = 'แสดงผลงานที่เผยแพร่แล้ว ' + items.length + ' รายการ';
+    // Lightbox lets visitors enlarge photos and browse all photos for the same project.
+    let modal = document.getElementById('portfolio-lightbox');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'portfolio-lightbox';
+      modal.style.cssText = 'display:none;position:fixed;inset:0;z-index:99999;background:rgba(3,12,25,.94);align-items:center;justify-content:center;padding:24px;box-sizing:border-box;';
+      modal.innerHTML = '<button type="button" aria-label="ปิดภาพ" style="position:absolute;right:20px;top:14px;color:#fff;background:#243449;border:0;border-radius:8px;padding:10px 15px;font-size:20px;cursor:pointer">✕</button><button type="button" aria-label="ภาพก่อนหน้า" data-prev style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#fff;background:#243449;border:0;border-radius:8px;padding:12px;font-size:24px;cursor:pointer">‹</button><img alt="" style="max-width:88vw;max-height:78vh;object-fit:contain;border-radius:8px"><button type="button" aria-label="ภาพถัดไป" data-next style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#fff;background:#243449;border:0;border-radius:8px;padding:12px;font-size:24px;cursor:pointer">›</button><div data-caption style="position:absolute;bottom:12px;left:0;right:0;text-align:center;color:white;font-size:15px"></div>';
+      document.body.append(modal);
+    }
+    const modalImg = modal.querySelector('img');
+    const caption = modal.querySelector('[data-caption]');
+    let currentPhotos = [], currentIndex = 0;
+    const showPhoto = () => {
+      const photo = currentPhotos[currentIndex];
+      if (!photo) return;
+      modalImg.src = imageUrl(photo);
+      modalImg.alt = photo.title || 'ผลงาน Advance Network';
+      caption.textContent = (photo.title || 'ผลงานติดตั้ง') + ' — ภาพ ' + (currentIndex + 1) + ' / ' + currentPhotos.length;
+    };
+    const closeModal = () => { modal.style.display = 'none'; modalImg.src = ''; };
+    modal.querySelector('button[aria-label="ปิดภาพ"]').onclick = closeModal;
+    modal.querySelector('[data-prev]').onclick = () => { currentIndex = (currentIndex - 1 + currentPhotos.length) % currentPhotos.length; showPhoto(); };
+    modal.querySelector('[data-next]').onclick = () => { currentIndex = (currentIndex + 1) % currentPhotos.length; showPhoto(); };
+    modal.onclick = e => { if (e.target === modal) closeModal(); };
+    document.onkeydown = e => {
+      if (modal.style.display !== 'flex') return;
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowRight') modal.querySelector('[data-next]').click();
+      if (e.key === 'ArrowLeft') modal.querySelector('[data-prev]').click();
+    };
+    grid.replaceChildren();
+    for (const [title, photos] of groups) {
+      const first = photos[0];
+      const article = document.createElement('article'); article.className = 'project';
+      article.style.cursor = 'pointer';
+      const img = document.createElement('img');
+      img.src = imageUrl(first);
+      img.alt = title; img.loading = 'lazy';
+      img.title = 'คลิกเพื่อดูภาพขนาดใหญ่';
+      img.style.cursor = 'zoom-in';
+      img.onclick = () => { currentPhotos = photos; currentIndex = 0; showPhoto(); modal.style.display = 'flex'; };
+      const body = document.createElement('div'); body.className = 'project-body';
+      const h = document.createElement('h3'); h.textContent = title;
+      const p = document.createElement('p'); p.textContent = first.description || first.category || 'ผลงานติดตั้ง Advance Network';
+      if (photos.length > 1) p.textContent += ' · ' + photos.length + ' ภาพ — คลิกเพื่อดูทั้งหมด';
+      body.append(h,p); article.append(img,body);
+      article.onclick = e => { if (e.target !== img) { currentPhotos = photos; currentIndex = 0; showPhoto(); modal.style.display = 'flex'; } };
+      grid.append(article);
+    }
+    note.textContent = 'แสดง ' + groups.size + ' ผลงาน (' + items.length + ' ภาพ) — คลิกภาพเพื่อดูขนาดใหญ่';
   } catch (error) {
     console.error(error);
     note.textContent = 'ไม่สามารถโหลดผลงานล่าสุดได้ในขณะนี้';
