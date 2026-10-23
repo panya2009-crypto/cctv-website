@@ -58,12 +58,13 @@
   <div><div class="about-video"><img src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=700&q=80" alt="ทีมช่างทำงานติดตั้งระบบ"><div class="play">▶</div><div class="video-caption">งานติดตั้งอย่างมืออาชีพ</div></div><div class="stats"><div class="stat"><div class="stat-icon">▧</div><div><strong>ผลงานจริง</strong><span>ตัวอย่างงานติดตั้ง</span></div></div><div class="stat"><div class="stat-icon">✦</div><div><strong>ใส่ใจคุณภาพ</strong><span>เลือกโซลูชันให้เหมาะสม</span></div></div><div class="stat"><div class="stat-icon">⚒</div><div><strong>ทีมช่าง</strong><span>ทำงานเป็นขั้นตอน</span></div></div><div class="stat"><div class="stat-icon">♧</div><div><strong>บริการต่อเนื่อง</strong><span>ดูแลหลังการขาย</span></div></div></div></div>
 </div></section>
 <section class="section" id="projects"><div class="container"><div class="section-head"><div><div class="section-kicker">Our portfolio</div><h2 class="section-title">ผลงานติดตั้ง</h2><p class="section-desc">ตัวอย่างประเภทงานที่เราสามารถให้บริการได้</p></div><a class="text-link" href="#contact">สอบถามผลงานเพิ่มเติม　›</a></div>
-  <div class="projects-grid">
+  <div class="projects-grid" id="live-projects">
     <article class="project"><img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80" alt="บ้านพักอาศัย"><div class="project-body"><h3>บ้านพักอาศัย</h3><p>ระบบกล้องวงจรปิดและ Wi-Fi</p></div></article>
     <article class="project"><img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80" alt="อาคารสำนักงาน"><div class="project-body"><h3>สำนักงาน</h3><p>ระบบ Network และกล้องวงจรปิด</p></div></article>
     <article class="project"><img src="https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=600&q=80" alt="โรงงาน"><div class="project-body"><h3>โรงงาน</h3><p>ระบบรักษาความปลอดภัย</p></div></article>
     <article class="project"><img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80" alt="ห้องเซิร์ฟเวอร์"><div class="project-body"><h3>ห้อง Server</h3><p>ระบบเครือข่ายและตู้ Rack</p></div></article>
   </div>
+  <p id="gallery-live-note" class="section-desc" style="margin-top:16px">กำลังโหลดผลงานล่าสุด…</p>
 </div></section>
 <section class="section section-light"><div class="container"><div class="section-head"><div><div class="section-kicker">Technology partners</div><h2 class="section-title">แบรนด์สินค้าและอุปกรณ์</h2><p class="section-desc">ปรับรายการให้ตรงกับแบรนด์ที่บริษัทจำหน่ายและให้บริการจริง</p></div></div><div class="brands"><span class="brand-pill">HIKVISION</span><span class="brand-pill">Dahua</span><span class="brand-pill">UNV</span><span class="brand-pill">Ruijie</span><span class="brand-pill">Reyee</span><span class="brand-pill">TP-Link</span><span class="brand-pill">Ubiquiti</span><span class="brand-pill">MikroTik</span></div></div></section>
 <section class="section" id="knowledge"><div class="container"><div class="section-head"><div><div class="section-kicker">Knowledge center</div><h2 class="section-title">บทความและความรู้</h2><p class="section-desc">ข้อมูลเบื้องต้นช่วยให้เลือกอุปกรณ์และระบบได้เหมาะสม</p></div><a class="text-link" href="#contact">สอบถามเรื่องระบบ　›</a></div>
@@ -85,6 +86,50 @@ const menuToggle=document.getElementById('menuToggle');const navLinks=document.g
 menuToggle.addEventListener('click',()=>{const open=navLinks.classList.toggle('open');menuToggle.setAttribute('aria-expanded',String(open));menuToggle.textContent=open?'✕':'☰';});
 navLinks.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{navLinks.classList.remove('open');menuToggle.setAttribute('aria-expanded','false');menuToggle.textContent='☰';}));
 document.getElementById('year').textContent=new Date().getFullYear();
+</script>
+
+
+<script>
+/* Advance Network live gallery: public key only; never place service_role/secret keys here. */
+(async function loadAdvanceNetworkGallery(){
+  const SUPABASE_URL = 'https://uqwubpdolhrxtavkuzvg.supabase.co';
+  const SUPABASE_PUBLIC_KEY = 'PASTE_YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY_HERE';
+  const bucket = 'portfolio-images';
+  const grid = document.getElementById('live-projects');
+  const note = document.getElementById('gallery-live-note');
+  if (!grid || !note) return;
+  if (!SUPABASE_PUBLIC_KEY || SUPABASE_PUBLIC_KEY.includes('PASTE_YOUR')) {
+    note.textContent = 'แกลเลอรีผลงานกำลังรอตั้งค่าการเชื่อมต่อ';
+    return;
+  }
+  try {
+    const response = await fetch(SUPABASE_URL + '/rest/v1/gallery_images?select=id,title,description,category,image_path,is_published,display_order&is_published=eq.true&order=display_order.asc', {
+      headers: { apikey: SUPABASE_PUBLIC_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLIC_KEY }
+    });
+    if (!response.ok) throw new Error('Gallery request failed: ' + response.status);
+    const items = await response.json();
+    if (!items.length) {
+      grid.replaceChildren();
+      note.textContent = 'ผลงานกำลังทยอยเพิ่ม โปรดกลับมาเยี่ยมชมอีกครั้ง';
+      return;
+    }
+    grid.replaceChildren();
+    for (const item of items) {
+      const article = document.createElement('article'); article.className = 'project';
+      const img = document.createElement('img');
+      img.src = SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + item.image_path.split('/').map(encodeURIComponent).join('/');
+      img.alt = item.title || 'ผลงาน Advance Network'; img.loading = 'lazy';
+      const body = document.createElement('div'); body.className = 'project-body';
+      const h = document.createElement('h3'); h.textContent = item.title || 'ผลงานติดตั้ง';
+      const p = document.createElement('p'); p.textContent = item.description || item.category || 'ผลงานติดตั้ง Advance Network';
+      body.append(h,p); article.append(img,body); grid.append(article);
+    }
+    note.textContent = 'แสดงผลงานที่เผยแพร่แล้ว ' + items.length + ' รายการ';
+  } catch (error) {
+    console.error(error);
+    note.textContent = 'ไม่สามารถโหลดผลงานล่าสุดได้ในขณะนี้';
+  }
+})();
 </script>
 
 <!-- Contact details and LINE QR updated 2026-10-21; trigger GitHub Pages rebuild -->
