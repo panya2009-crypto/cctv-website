@@ -7,6 +7,8 @@
 <title>จัดการรูปภาพ | Advance Network</title>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
 :root{--navy:#06172e;--navy2:#0b2849;--orange:#ff6a00;--blue:#168bff;--ink:#10223b;--muted:#64748b;--line:#e2e8f0;--bg:#f4f7fb;--green:#16835d;--red:#c2413b}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:'Prompt',sans-serif;color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:10px 15px;font-weight:500}.primary{background:var(--orange);color:#fff}.secondary{background:#e8eef6;color:var(--navy)}.danger{background:#fee2e2;color:#991b1b}.hidden{display:none!important}.top{background:var(--navy);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px}.top strong{font-family:'Kanit';font-size:22px}.top a{color:#fff}.wrap{max-width:1100px;margin:28px auto;padding:0 18px}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 28px #071a2b0b;margin-bottom:20px}.panel h2{font-family:'Kanit';margin:0 0 14px;font-size:22px}.note{color:var(--muted);font-size:14px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-weight:500;font-size:14px}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:11px;background:#fff}.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.status{margin:12px 0;padding:11px 13px;border-radius:9px;background:#eff6ff;color:#1d4ed8;white-space:pre-wrap}.status.error{background:#fef2f2;color:#991b1b}.status.ok{background:#ecfdf5;color:#065f46}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}.item{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}.item img{width:100%;height:165px;object-fit:cover;background:#e2e8f0}.itembody{padding:13px}.itembody h3{font-size:16px;margin:0 0 5px;overflow-wrap:anywhere}.pill{display:inline-block;font-size:12px;border-radius:99px;padding:3px 9px;background:#f1f5f9;color:#334155;margin:3px 0 8px}.pill.on{background:#dcfce7;color:#166534}.pill.off{background:#fee2e2;color:#991b1b}.item .actions button{font-size:13px;padding:8px 10px}.check{display:flex;gap:8px;align-items:center;margin:12px 0}.check input{width:auto}.small{font-size:12px;color:var(--muted)}@media(max-width:640px){.row{grid-template-columns:1fr}.top{padding:14px 16px}.panel{padding:16px}.top strong{font-size:19px}}
@@ -50,6 +52,7 @@
 </div>
 <div class="field"><label for="description">คำอธิบาย</label><textarea id="description" rows="2" maxlength="500" placeholder="รายละเอียดผลงาน (ไม่บังคับ)"></textarea></div>
 <div class="field"><label for="file">เลือกรูปจากคอมพิวเตอร์ <span class="small">(JPG, PNG, WebP; ไม่เกิน 5 MB)</span></label><input id="file" type="file" accept="image/jpeg,image/png,image/webp"></div>
+<div class="field"><label>หรือเลือกรูปจาก Google Drive</label><div class="actions"><button class="secondary" type="button" id="pickDriveBtn">เลือกจาก Google Drive</button><button class="secondary hidden" type="button" id="clearDriveBtn">ยกเลิกภาพจาก Drive</button></div><div id="driveSelection" class="small">ยังไม่ได้เลือกไฟล์จาก Drive</div><p class="small">เฉพาะรูปที่คุณเลือกและเผยแพร่เท่านั้นที่ควรเปิดให้ผู้เข้าชมเว็บไซต์ดูได้ รูปจาก Drive จะไม่ถูกคัดลอกเข้า Supabase Storage</p></div>
 <div class="check"><input id="published" type="checkbox"><label for="published">เผยแพร่รูปบนเว็บไซต์</label></div>
 <div class="row"><div class="field"><label for="order">ลำดับแสดงผล</label><input id="order" type="number" value="0" min="0" max="9999"></div><div class="field"><label for="replacementNote">หมายเหตุ</label><input id="replacementNote" value="หากแก้ไขรายการเดิมโดยไม่เลือกไฟล์ รูปเดิมจะยังอยู่" disabled></div></div>
 <div class="actions"><button class="primary" type="submit" id="saveImageBtn">บันทึกข้อมูลรูป</button><button class="secondary" type="button" id="cancelEditBtn">ล้างฟอร์ม</button></div>
@@ -67,10 +70,18 @@
   const SUPABASE_PUBLIC_KEY = 'PASTE_YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY_HERE';
   const BUCKET = 'portfolio-images';
   const ADMIN_UID = '308c8555-b92e-461d-8911-d4c2bef01dfc';
+  const GOOGLE_CLIENT_ID = '1096526564934-be7c1gc2p7e9uk3at3ikvnmug1gjlv5c.apps.googleusercontent.com';
+  const GOOGLE_API_KEY = 'AIzaSyCxjxDRsv7P99dHAFc0vGi64_vJVAOWU88';
+  const GOOGLE_APP_ID = '1096526564934';
+  const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
   const $ = id => document.getElementById(id);
   let client = null;
   let currentUser = null;
   let rows = [];
+  let selectedDriveFile = null;
+  let googleAccessToken = null;
+  let pickerApiReady = false;
+  let tokenClient = null;
   const setStatus = (id, message, type='') => { const el=$(id); el.textContent=message; el.className='status'+(type?' '+type:''); el.classList.remove('hidden'); };
   const clearStatus = id => { $(id).classList.add('hidden'); };
   const configSaved = () => {
@@ -140,10 +151,65 @@
   $('refreshBtn').addEventListener('click', loadImages);
   $('cancelEditBtn').addEventListener('click', resetForm);
   function resetForm() {
-    $('imageForm').reset(); $('editId').value=''; $('order').value='0';
+    $('imageForm').reset(); $('editId').value=''; $('order').value='0'; selectedDriveFile=null; $('driveSelection').textContent='ยังไม่ได้เลือกไฟล์จาก Drive'; $('clearDriveBtn').classList.add('hidden');
     $('formTitle').textContent='เพิ่มรูปภาพใหม่'; $('saveImageBtn').textContent='บันทึกข้อมูลรูป'; $('file').required=false;
   }
-  function publicUrl(path) { return client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl; }
+  function isDrivePath(path) { return typeof path === 'string' && path.startsWith('gdrive:'); }
+  function driveFileId(path) { return path.slice('gdrive:'.length); }
+  function imageUrl(path) { return isDrivePath(path) ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(driveFileId(path)) + '&sz=w1200' : client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl; }
+  function publicUrl(path) { return imageUrl(path); }
+  function loadPickerApi() {
+    return new Promise((resolve, reject) => {
+      if (pickerApiReady && window.google?.picker) return resolve();
+      if (!window.gapi) return reject(new Error('Google API กำลังโหลดไม่เสร็จ กรุณารอสักครู่แล้วลองใหม่'));
+      window.gapi.load('picker', { callback: () => { pickerApiReady = true; resolve(); }, onerror: () => reject(new Error('โหลด Google Picker ไม่สำเร็จ')) });
+    });
+  }
+  async function openDrivePicker() {
+    if (!currentUser || currentUser.id !== ADMIN_UID) { setStatus('appStatus','กรุณาเข้าสู่ระบบผู้ดูแลก่อน','error'); return; }
+    try {
+      await loadPickerApi();
+      if (!window.google?.accounts?.oauth2) throw new Error('Google Sign-In ยังโหลดไม่เสร็จ กรุณารอสักครู่แล้วลองใหม่');
+      tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: DRIVE_SCOPE,
+        callback: async (response) => {
+          if (response.error || !response.access_token) { setStatus('appStatus','ขอสิทธิ์ Google Drive ไม่สำเร็จ: '+(response.error_description||response.error||'ไม่ทราบสาเหตุ'),'error'); return; }
+          googleAccessToken = response.access_token;
+          const picker = new google.picker.PickerBuilder()
+            .setDeveloperKey(GOOGLE_API_KEY)
+            .setAppId(GOOGLE_APP_ID)
+            .setOAuthToken(googleAccessToken)
+            .addView(new google.picker.DocsView(google.picker.ViewId.DOCS).setMimeTypes('image/png,image/jpeg,image/webp'))
+            .setOrigin(window.location.protocol + '//' + window.location.host)
+            .setCallback(pickerCallback)
+            .build();
+          picker.setVisible(true);
+        }
+      });
+      tokenClient.requestAccessToken({prompt: googleAccessToken ? '' : 'consent'});
+    } catch (err) { setStatus('appStatus',err.message||String(err),'error'); }
+  }
+  async function pickerCallback(data) {
+    if (data.action !== google.picker.Action.PICKED) return;
+    const file = data.docs && data.docs[0];
+    if (!file) return;
+    if (!String(file.mimeType||'').startsWith('image/')) { setStatus('appStatus','กรุณาเลือกไฟล์รูปภาพเท่านั้น','error'); return; }
+    if (!confirm('ต้องการใช้รูปนี้บนเว็บไซต์สาธารณะหรือไม่?\n\nหากยืนยัน ระบบจะเปิดสิทธิ์ดูไฟล์รูปที่เลือกนี้ให้ทุกคนที่มีลิงก์ดูได้ โดยไม่เปิดโฟลเดอร์หรือรูปอื่นใน Drive')) return;
+    try {
+      const response = await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'/permissions?supportsAllDrives=true', {
+        method:'POST', headers:{Authorization:'Bearer '+googleAccessToken,'Content-Type':'application/json'}, body:JSON.stringify({type:'anyone',role:'reader'})
+      });
+      if (!response.ok) { const detail=await response.text(); throw new Error('เปิดสิทธิ์ดูรูปไม่สำเร็จ ('+response.status+'). ตรวจว่า Google Drive API เปิดใช้งานและ API Key อนุญาต Drive API แล้ว '+detail.slice(0,180)); }
+      selectedDriveFile = {id:file.id,name:file.name||'รูปจาก Google Drive',mimeType:file.mimeType};
+      $('driveSelection').textContent='เลือกแล้ว: '+selectedDriveFile.name+' (ไฟล์นี้จะเปิดให้ดูบนเว็บไซต์ได้)';
+      $('clearDriveBtn').classList.remove('hidden');
+      $('file').value='';
+      setStatus('appStatus','เลือกรูปจาก Drive เรียบร้อยแล้ว สามารถบันทึกข้อมูลผลงานได้','ok');
+    } catch(err) { setStatus('appStatus',err.message||String(err),'error'); }
+  }
+  $('pickDriveBtn').addEventListener('click', openDrivePicker);
+  $('clearDriveBtn').addEventListener('click', () => { selectedDriveFile=null; $('driveSelection').textContent='ยังไม่ได้เลือกไฟล์จาก Drive'; $('clearDriveBtn').classList.add('hidden'); });
   async function loadImages() {
     if(!client || !currentUser) return;
     clearStatus('appStatus');
@@ -169,15 +235,16 @@
   }
   function editRow(row){
     $('editId').value=row.id;$('title').value=row.title||'';$('description').value=row.description||'';$('category').value=row.category||'CCTV';$('published').checked=!!row.is_published;$('order').value=row.display_order||0;
-    $('file').value='';$('file').required=false;$('formTitle').textContent='แก้ไขรูปภาพ';$('saveImageBtn').textContent='บันทึกการแก้ไข';window.scrollTo({top:0,behavior:'smooth'});
+    $('file').value='';$('file').required=false;selectedDriveFile=null;$('driveSelection').textContent=isDrivePath(row.image_path)?'รูปปัจจุบันมาจาก Google Drive':'ยังไม่ได้เลือกไฟล์จาก Drive';$('clearDriveBtn').classList.add('hidden');$('formTitle').textContent='แก้ไขรูปภาพ';$('saveImageBtn').textContent='บันทึกการแก้ไข';window.scrollTo({top:0,behavior:'smooth'});
   }
   $('imageForm').addEventListener('submit',async e=>{
     e.preventDefault(); if(!client||!currentUser||currentUser.id!==ADMIN_UID)return;
     clearStatus('appStatus');
     const id=$('editId').value;const file=$('file').files[0];const title=$('title').value.trim();
     if(file && (!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024)){setStatus('appStatus','ไฟล์ต้องเป็น JPG, PNG หรือ WebP และขนาดไม่เกิน 5 MB','error');return;}
-    let path=id?(rows.find(r=>r.id===id)?.image_path):null;let uploadedNew=false;
+    let path=id?(rows.find(r=>r.id===id)?.image_path):null;let uploadedNew=false;let driveSelectedNew=false;
     try{
+      if(selectedDriveFile){path='gdrive:'+selectedDriveFile.id;driveSelectedNew=true;}
       if(file){
         path=Date.now()+'-'+file.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-');
         const {error:upErr}=await client.storage.from(BUCKET).upload(path,file,{upsert:false,contentType:file.type});
@@ -186,9 +253,10 @@
       const payload={title,description:$('description').value.trim()||null,category:$('category').value,image_path:path,is_published:$('published').checked,display_order:Number($('order').value)||0};
       if(id){
         const {error}=await client.from('gallery_images').update(payload).eq('id',id);if(error)throw error;
-        if(uploadedNew && rows.find(r=>r.id===id)?.image_path){const {error:removeErr}=await client.storage.from(BUCKET).remove([rows.find(r=>r.id===id).image_path]);if(removeErr)console.warn('Old image cleanup failed',removeErr);}
+        const oldPath=rows.find(r=>r.id===id)?.image_path;
+        if(uploadedNew && oldPath && !isDrivePath(oldPath)){const {error:removeErr}=await client.storage.from(BUCKET).remove([oldPath]);if(removeErr)console.warn('Old image cleanup failed',removeErr);}
       }else{
-        if(!file)throw new Error('กรุณาเลือกไฟล์รูปภาพ');
+        if(!file&&!driveSelectedNew)throw new Error('กรุณาเลือกรูปจากคอมพิวเตอร์หรือ Google Drive');
         const {error}=await client.from('gallery_images').insert(payload);if(error)throw error;
       }
       resetForm();setStatus('appStatus','บันทึกข้อมูลเรียบร้อย','ok');await loadImages();
@@ -205,8 +273,10 @@
     if(!confirm('ยืนยันลบรายการ "'+row.title+'" และไฟล์รูปนี้หรือไม่?'))return;
     const {error:dbErr}=await client.from('gallery_images').delete().eq('id',row.id);
     if(dbErr){setStatus('appStatus','ลบข้อมูลไม่สำเร็จ: '+dbErr.message,'error');return;}
-    const {error:storageErr}=await client.storage.from(BUCKET).remove([row.image_path]);
-    if(storageErr){setStatus('appStatus','ลบรายการแล้ว แต่ลบไฟล์ไม่สำเร็จ: '+storageErr.message,'error');await loadImages();return;}
+    if(!isDrivePath(row.image_path)){
+      const {error:storageErr}=await client.storage.from(BUCKET).remove([row.image_path]);
+      if(storageErr){setStatus('appStatus','ลบรายการแล้ว แต่ลบไฟล์ไม่สำเร็จ: '+storageErr.message,'error');await loadImages();return;}
+    }
     setStatus('appStatus','ลบรายการและไฟล์แล้ว','ok');await loadImages();
   }
   configSaved();
