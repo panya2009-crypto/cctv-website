@@ -113,7 +113,7 @@ document.getElementById('year').textContent=new Date().getFullYear();
       note.textContent = 'ผลงานกำลังทยอยเพิ่ม โปรดกลับมาเยี่ยมชมอีกครั้ง';
       return;
     }
-    const imageUrl = item => SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + item.image_path.split('/').map(encodeURIComponent).join('/');
+    const imageUrl = item => typeof item.image_path === 'string' && item.image_path.startsWith('gdrive:') ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(item.image_path.slice(7)) + '&sz=w1200' : SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + item.image_path.split('/').map(encodeURIComponent).join('/');
     // Group records with the same title into one project card.
     const groups = new Map();
     for (const item of items) {
