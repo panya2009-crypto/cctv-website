@@ -103,23 +103,36 @@ document.getElementById('year').textContent=new Date().getFullYear();
     return;
   }
   try {
-    const response = await fetch(SUPABASE_URL + '/rest/v1/gallery_images?select=id,title,description,category,image_path,is_published,display_order&is_published=eq.true&order=display_order.asc', {
-      headers: { apikey: SUPABASE_PUBLIC_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLIC_KEY }
-    });
+    const headers = { apikey: SUPABASE_PUBLIC_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLIC_KEY };
+    const response = await fetch(SUPABASE_URL + '/rest/v1/gallery_images?select=id,title,description,category,image_path,is_published,display_order,project_id&is_published=eq.true&order=display_order.asc', { headers });
     if (!response.ok) throw new Error('Gallery request failed: ' + response.status);
     const items = await response.json();
+    const projectsResponse = await fetch(SUPABASE_URL + '/rest/v1/projects?select=id,name,description,category,cover_image_path,display_order,is_published&is_published=eq.true&order=display_order.asc,name.asc', { headers });
+    if (!projectsResponse.ok) throw new Error('Projects request failed: ' + projectsResponse.status);
+    const projectRecords = await projectsResponse.json();
     if (!items.length) {
       grid.replaceChildren();
       note.textContent = 'ผลงานกำลังทยอยเพิ่ม โปรดกลับมาเยี่ยมชมอีกครั้ง';
       return;
     }
     const imageUrl = item => typeof item.image_path === 'string' && item.image_path.startsWith('gdrive:') ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(item.image_path.slice(7)) + '&sz=w1200' : SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + item.image_path.split('/').map(encodeURIComponent).join('/');
-    // Group records with the same title into one project card.
+    // Group images by project_id. Legacy records without a project still group by their old title.
     const groups = new Map();
+    for (const project of projectRecords) {
+      groups.set(project.id, { title: project.name || 'ผลงานติดตั้ง', project, photos: [] });
+    }
     for (const item of items) {
-      const key = (item.title || 'ผลงานติดตั้ง').trim();
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(item);
+      if (item.project_id && groups.has(item.project_id)) {
+        groups.get(item.project_id).photos.push(item);
+      } else if (!item.project_id) {
+        const key = 'legacy:' + (item.title || 'ผลงานติดตั้ง').trim();
+        if (!groups.has(key)) groups.set(key, { title: (item.title || 'ผลงานติดตั้ง').trim(), project: null, photos: [] });
+        groups.get(key).photos.push(item);
+      }
+    }
+    for (const [key, group] of [...groups]) {
+      if (!group.photos.length) groups.delete(key);
+      else group.photos.sort((a,b) => (a.display_order||0)-(b.display_order||0));
     }
     // Lightbox lets visitors enlarge photos and browse all photos for the same project.
     let modal = document.getElementById('portfolio-lightbox');
@@ -152,7 +165,9 @@ document.getElementById('year').textContent=new Date().getFullYear();
       if (e.key === 'ArrowLeft') modal.querySelector('[data-prev]').click();
     };
     grid.replaceChildren();
-    for (const [title, photos] of groups) {
+    for (const [groupId, group] of groups) {
+      const title = group.title;
+      const photos = group.photos;
       const first = photos[0];
       const article = document.createElement('article'); article.className = 'project';
       article.style.cursor = 'pointer';
