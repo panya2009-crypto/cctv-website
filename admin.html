@@ -47,7 +47,8 @@
 <form id="imageForm">
 <input id="editId" type="hidden">
 <div class="row">
-<div class="field"><label for="title">ชื่อผลงาน *</label><input id="title" required maxlength="140" placeholder="เช่น ติดตั้งกล้องวงจรปิดสำนักงาน"></div>
+<div class="field"><label for="projectSelect">โครงการ</label><select id="projectSelect"><option value="">ยังไม่จัดเข้ากลุ่ม</option></select></div>
+<div class="field"><label for="title">ชื่อรูป/ผลงาน *</label><input id="title" required maxlength="140" placeholder="เช่น ติดตั้งกล้องวงจรปิดสำนักงาน"></div>
 <div class="field"><label for="category">หมวดหมู่</label><select id="category"><option>CCTV</option><option>Network & Wi-Fi</option><option>Alarm</option><option>Access Control</option><option>ไม้กั้นรถยนต์</option><option>อื่น ๆ</option></select></div>
 </div>
 <div class="field"><label for="description">คำอธิบาย</label><textarea id="description" rows="2" maxlength="500" placeholder="รายละเอียดผลงาน (ไม่บังคับ)"></textarea></div>
@@ -59,7 +60,18 @@
 </form>
 </div>
 <div class="panel">
-<div class="toolbar"><h2>รูปภาพทั้งหมด</h2><span id="countLabel" class="note">0 รายการ</span></div>
+<h2>จัดการโครงการ</h2>
+<p class="note">สร้างโครงการก่อน แล้วเลือกรูปที่ต้องการจัดเข้ากลุ่มได้ รูปเก่าจะไม่ถูกลบ</p>
+<div class="row">
+<div class="field"><label for="newProjectName">ชื่อโครงการใหม่</label><input id="newProjectName" maxlength="140" placeholder="เช่น ติดตั้งกล้องโรงงาน A"></div>
+<div class="field"><label for="newProjectCategory">หมวดหมู่</label><select id="newProjectCategory"><option>CCTV</option><option>Network & Wi-Fi</option><option>Alarm</option><option>Access Control</option><option>ไม้กั้นรถยนต์</option><option>อื่น ๆ</option></select></div>
+</div>
+<div class="actions"><button id="createProjectBtn" class="primary" type="button">สร้างโครงการ</button><input id="projectSearch" placeholder="ค้นหาโครงการ..." style="max-width:280px;border:1px solid #cbd5e1;border-radius:9px;padding:10px"></div>
+<div id="projectGrid" class="grid" style="margin-top:16px"></div>
+</div>
+<div class="panel">
+<div class="toolbar"><h2 id="imagesHeading">รูปภาพทั้งหมด</h2><span id="countLabel" class="note">0 รายการ</span></div>
+<div class="actions" style="margin-bottom:12px"><button id="showAllImagesBtn" class="secondary" type="button">แสดงรูปทั้งหมด</button><button id="showUnassignedBtn" class="secondary" type="button">รูปที่ยังไม่จัดกลุ่ม</button></div>
 <div id="imageGrid" class="grid"></div>
 </div>
 </section>
@@ -78,6 +90,8 @@
   let client = null;
   let currentUser = null;
   let rows = [];
+  let projects = [];
+  let activeProjectFilter = null;
   let selectedDriveFile = null;
   let googleAccessToken = null;
   let pickerApiReady = false;
@@ -213,17 +227,52 @@
   async function loadImages() {
     if(!client || !currentUser) return;
     clearStatus('appStatus');
-    const {data,error}=await client.from('gallery_images').select('*').order('display_order',{ascending:true}).order('created_at',{ascending:false});
-    if(error){setStatus('appStatus','โหลดข้อมูลไม่สำเร็จ: '+error.message,'error');return;}
-    rows=data||[]; $('countLabel').textContent=rows.length+' รายการ';
-    const grid=$('imageGrid'); grid.replaceChildren();
-    if(!rows.length){grid.textContent='ยังไม่มีรูปภาพในรายการ';return;}
-    for(const row of rows){
+    const [imageResult, projectResult] = await Promise.all([
+      client.from('gallery_images').select('*').order('display_order',{ascending:true}).order('created_at',{ascending:false}),
+      client.from('projects').select('*').order('display_order',{ascending:true}).order('name',{ascending:true})
+    ]);
+    if(imageResult.error){setStatus('appStatus','โหลดรูปไม่สำเร็จ: '+imageResult.error.message,'error');return;}
+    if(projectResult.error){setStatus('appStatus','โหลดโครงการไม่สำเร็จ: '+projectResult.error.message,'error');return;}
+    rows=imageResult.data||[]; projects=projectResult.data||[];
+    const select=$('projectSelect'); const oldValue=select.value;
+    select.replaceChildren(new Option('ยังไม่จัดเข้ากลุ่ม',''));
+    for(const p of projects) select.add(new Option(p.name,p.id));
+    if(projects.some(p=>p.id===oldValue)) select.value=oldValue;
+    renderProjects(); renderImageCards();
+  }
+  function renderProjects(){
+    const grid=$('projectGrid'); grid.replaceChildren();
+    const term=($('projectSearch').value||'').trim().toLowerCase();
+    const visible=projects.filter(p=>p.name.toLowerCase().includes(term));
+    for(const p of visible){
+      const projectRows=rows.filter(r=>r.project_id===p.id);
+      const card=document.createElement('article');card.className='item';
+      const cover=projectRows.find(r=>r.is_published)||projectRows[0];
+      if(cover){const img=document.createElement('img');img.src=publicUrl(cover.image_path);img.alt=p.name;img.loading='lazy';card.append(img);}
+      const body=document.createElement('div');body.className='itembody';
+      const h=document.createElement('h3');h.textContent=p.name;
+      const count=document.createElement('p');count.className='small';count.textContent=projectRows.length+' รูป · '+(projectRows.filter(r=>r.is_published).length)+' รูปเผยแพร่';
+      const actions=document.createElement('div');actions.className='actions';
+      const view=document.createElement('button');view.className='secondary';view.textContent='ดูรูปในโครงการ';view.onclick=()=>{activeProjectFilter=p.id;renderImageCards();$('imagesHeading').textContent='รูปในโครงการ: '+p.name;};
+      const rename=document.createElement('button');rename.className='secondary';rename.textContent='เปลี่ยนชื่อ';rename.onclick=async()=>{const name=prompt('ชื่อโครงการใหม่',p.name);if(!name||!name.trim()||name.trim()===p.name)return;const {error}=await client.from('projects').update({name:name.trim()}).eq('id',p.id);if(error){setStatus('appStatus','เปลี่ยนชื่อโครงการไม่สำเร็จ: '+error.message,'error');return;}await loadImages();};
+      actions.append(view,rename);body.append(h,count,actions);card.append(body);grid.append(card);
+    }
+    if(!visible.length)grid.textContent='ไม่พบโครงการ';
+  }
+  function renderImageCards(){
+    const grid=$('imageGrid');grid.replaceChildren();
+    let visible=rows;
+    if(activeProjectFilter==='unassigned') visible=rows.filter(r=>!r.project_id);
+    else if(activeProjectFilter) visible=rows.filter(r=>r.project_id===activeProjectFilter);
+    $('countLabel').textContent=visible.length+' รายการ';
+    if(!visible.length){grid.textContent='ไม่มีรูปในกลุ่มนี้';return;}
+    for(const row of visible){
       const card=document.createElement('article');card.className='item';
       const img=document.createElement('img');img.alt=row.title||'รูปผลงาน';img.loading='lazy';img.src=publicUrl(row.image_path);
       const body=document.createElement('div');body.className='itembody';
       const h=document.createElement('h3');h.textContent=row.title;
-      const cat=document.createElement('div');cat.className='small';cat.textContent=(row.category||'อื่น ๆ')+' · ลำดับ '+row.display_order;
+      const project=projects.find(p=>p.id===row.project_id);
+      const cat=document.createElement('div');cat.className='small';cat.textContent=(project?project.name:'ยังไม่จัดกลุ่ม')+' · '+(row.category||'อื่น ๆ')+' · ลำดับ '+row.display_order;
       const pill=document.createElement('span');pill.className='pill '+(row.is_published?'on':'off');pill.textContent=row.is_published?'เผยแพร่แล้ว':'ซ่อนอยู่';
       const desc=document.createElement('p');desc.className='small';desc.textContent=row.description||'ไม่มีคำอธิบาย';
       const actions=document.createElement('div');actions.className='actions';
@@ -233,8 +282,17 @@
       actions.append(toggle,edit,del);body.append(h,cat,pill,desc,actions);card.append(img,body);grid.append(card);
     }
   }
+  $('createProjectBtn').addEventListener('click',async()=>{
+    const name=$('newProjectName').value.trim();if(!name){setStatus('appStatus','กรุณาใส่ชื่อโครงการ','error');return;}
+    const {error}=await client.from('projects').insert({name,category:$('newProjectCategory').value,is_published:true,display_order:0});
+    if(error){setStatus('appStatus','สร้างโครงการไม่สำเร็จ: '+error.message,'error');return;}
+    $('newProjectName').value='';setStatus('appStatus','สร้างโครงการเรียบร้อยแล้ว','ok');await loadImages();
+  });
+  $('projectSearch').addEventListener('input',renderProjects);
+  $('showAllImagesBtn').addEventListener('click',()=>{activeProjectFilter=null;$('imagesHeading').textContent='รูปภาพทั้งหมด';renderImageCards();});
+  $('showUnassignedBtn').addEventListener('click',()=>{activeProjectFilter='unassigned';$('imagesHeading').textContent='รูปที่ยังไม่จัดกลุ่ม';renderImageCards();});
   function editRow(row){
-    $('editId').value=row.id;$('title').value=row.title||'';$('description').value=row.description||'';$('category').value=row.category||'CCTV';$('published').checked=!!row.is_published;$('order').value=row.display_order||0;
+    $('editId').value=row.id;$('title').value=row.title||'';$('description').value=row.description||'';$('category').value=row.category||'CCTV';$('projectSelect').value=row.project_id||'';$('published').checked=!!row.is_published;$('order').value=row.display_order||0;
     $('file').value='';$('file').required=false;selectedDriveFile=null;$('driveSelection').textContent=isDrivePath(row.image_path)?'รูปปัจจุบันมาจาก Google Drive':'ยังไม่ได้เลือกไฟล์จาก Drive';$('clearDriveBtn').classList.add('hidden');$('formTitle').textContent='แก้ไขรูปภาพ';$('saveImageBtn').textContent='บันทึกการแก้ไข';window.scrollTo({top:0,behavior:'smooth'});
   }
   $('imageForm').addEventListener('submit',async e=>{
@@ -250,7 +308,7 @@
         const {error:upErr}=await client.storage.from(BUCKET).upload(path,file,{upsert:false,contentType:file.type});
         if(upErr)throw upErr;uploadedNew=true;
       }
-      const payload={title,description:$('description').value.trim()||null,category:$('category').value,image_path:path,is_published:$('published').checked,display_order:Number($('order').value)||0};
+      const payload={title,description:$('description').value.trim()||null,category:$('category').value,image_path:path,is_published:$('published').checked,display_order:Number($('order').value)||0,project_id:$('projectSelect').value||null};
       if(id){
         const {error}=await client.from('gallery_images').update(payload).eq('id',id);if(error)throw error;
         const oldPath=rows.find(r=>r.id===id)?.image_path;
