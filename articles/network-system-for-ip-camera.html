@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#06172e">
+<meta name="description" content="คู่มือวางระบบ Network สำหรับ IP Camera ตั้งแต่สาย LAN, PoE Switch, Bandwidth, VLAN, NVR และการดูภาพผ่านมือถือ เพื่อให้ระบบ CCTV ทำงานเสถียร">
+<title>วางระบบ Network ให้พร้อมสำหรับกล้อง IP | Advance Network CCTV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#06172e;--navy2:#0b2a4a;--orange:#ff6a00;--ink:#10223b;--muted:#64748b;--line:#e5ebf2;--pale:#f4f7fb}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;font-family:Prompt,sans-serif;color:var(--ink);line-height:1.8;background:#fff}a{color:inherit;text-decoration:none}img{display:block;max-width:100%}.container{width:min(100% - 40px,1080px);margin:auto}
+.topbar{position:sticky;top:0;z-index:20;background:#06172ef5;backdrop-filter:blur(12px);color:white;border-bottom:1px solid #ffffff18}.nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:18px}.brand{display:flex;align-items:center;gap:10px}.mark{width:40px;height:40px;display:grid;place-items:center;background:linear-gradient(140deg,#ff6a00 0 48%,#fff 49%);clip-path:polygon(50% 0,100% 100%,72% 100%,50% 48%,28% 100%,0 100%);font:800 28px Kanit;color:white}.brand strong{font:700 19px Kanit}.brand strong span{color:#ff7b22}.brand small{display:block;font-size:9px;letter-spacing:1.2px;color:#c8d7e8}.back{font-size:13px;color:#ff9a52}.back:hover{color:#fff}
+.hero{position:relative;overflow:hidden;color:white;padding:78px 0 72px;background:linear-gradient(90deg,#04142bf2 0%,#06172edb 46%,#06172e45 100%),url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1900&q=85') center/cover}.eyebrow{color:#ff8a35;font-size:12px;letter-spacing:2px;font-weight:600}.hero h1{font:800 clamp(32px,5vw,54px)/1.25 Kanit;margin:12px 0}.hero p{max-width:780px;color:#d7e4f2;font-size:16px;margin:0}.meta{font-size:12px;color:#b6c9dc;margin-top:22px}
+.article-wrap{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:42px;padding:48px 0 72px}.content{min-width:0}.lead{font-size:17px;color:#42546a;margin:0 0 26px}.content h2{font:700 27px/1.35 Kanit;color:#10223b;margin:42px 0 12px}.content h3{font:600 20px Kanit;margin:22px 0 8px}.content p{margin:10px 0 16px}.content ul{padding-left:22px}.content li{padding:3px 0}.content figure{margin:24px 0 28px}.content figure img{width:100%;max-height:440px;object-fit:cover;border-radius:17px;box-shadow:0 12px 30px #071a2b18}.content figcaption{font-size:12px;color:#7b8796;margin-top:8px;text-align:center}.toc{position:sticky;top:94px;align-self:start;background:#f5f8fc;border:1px solid var(--line);border-radius:16px;padding:20px}.toc strong{font:600 18px Kanit}.toc a{display:block;font-size:12px;color:#52647a;padding:7px 0;border-bottom:1px solid #e4eaf1}.toc a:hover{color:#f26800}
+.callout{background:#fff6ed;border-left:4px solid var(--orange);padding:16px 18px;border-radius:0 12px 12px 0;margin:22px 0;color:#70411f}.diagram{background:linear-gradient(135deg,#071a31,#0d3153);border-radius:18px;padding:22px;margin:24px 0;color:#fff;overflow:hidden}.diagram h3{color:#fff;margin:0 0 18px;text-align:center;font:600 20px Kanit}.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:stretch}.node{min-width:0;background:#ffffff12;border:1px solid #ffffff35;border-radius:12px;padding:14px 8px;text-align:center}.node .ico{font-size:25px;color:#ff9a42}.node b{display:block;font:600 15px Kanit;margin:4px 0}.node small{font-size:10px;color:#c8d8e8;line-height:1.4;display:block}.arrow{display:none}.diagram-note{text-align:center;color:#c6d8e9;font-size:11px;margin:14px 0 0}
+.spec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0}.spec{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}.spec b{font:600 17px Kanit;display:block;margin-bottom:4px}.spec p{font-size:13px;color:#64748b;margin:0}.compare{width:100%;border-collapse:collapse;margin:18px 0;font-size:13px}.compare th,.compare td{padding:11px 12px;border:1px solid #e3eaf2;text-align:left}.compare th{background:#092443;color:#fff;font-weight:500}.compare tr:nth-child(even) td{background:#f7f9fc}
+.steps{counter-reset:step;display:grid;gap:12px;margin:18px 0}.step{counter-increment:step;display:grid;grid-template-columns:42px 1fr;gap:12px;align-items:start;padding:14px;border:1px solid var(--line);border-radius:13px}.step:before{content:counter(step);width:36px;height:36px;border-radius:11px;background:#fff0e5;color:#ed6500;display:grid;place-items:center;font-weight:700}.step b{display:block;font:600 16px Kanit}.step span{font-size:13px;color:#64748b}
+.cta{background:linear-gradient(120deg,#06172e,#0b2a4a);border-radius:20px;color:white;padding:28px;margin-top:40px}.cta h2{color:white;margin:0 0 8px}.cta p{color:#c7d6e6}.btn{display:inline-flex;margin-top:10px;background:linear-gradient(110deg,#ff9d16,#ff5100);color:#fff;padding:11px 18px;border-radius:10px;font-weight:600;font-size:13px}.footer{background:#041226;color:#aebfd2;padding:25px 0;font-size:12px}.footer-row{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+@media(max-width:820px){.article-wrap{grid-template-columns:1fr;gap:20px;padding-top:30px}.toc{position:static;order:-1}.toc nav{display:grid;grid-template-columns:repeat(2,1fr);gap:0 15px}.hero{padding:56px 0}.flow{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px){.container{width:calc(100% - 28px)}.nav{height:64px}.brand strong{font-size:16px}.back{font-size:11px}.hero h1{font-size:34px}.hero p{font-size:14px}.content h2{font-size:24px}.spec-grid{grid-template-columns:1fr}.compare{font-size:11px}.compare th,.compare td{padding:8px 7px}.diagram{padding:16px}.node b{font-size:13px}.node small{font-size:9px}}
+</style></head>
+<body>
+<header class="topbar"><div class="container nav">
+<a class="brand" href="../index.html"><span class="mark">A</span><span><strong>Advance <span>Network</span></strong><small>CCTV & NETWORK SOLUTIONS</small></span></a>
+<a class="back" href="../index.html#knowledge">← กลับ Knowledge Center</a>
+</div></header>
+<main>
+<section class="hero"><div class="container">
+<div class="eyebrow">KNOWLEDGE CENTER · NETWORK GUIDE</div>
+<h1>วางระบบ Network ให้พร้อม<br>สำหรับกล้อง IP Camera</h1>
+<p>เข้าใจการออกแบบเครือข่าย ตั้งแต่สาย LAN, PoE Switch, Bandwidth, VLAN และ NVR เพื่อให้ระบบกล้องวงจรปิดทำงานได้เสถียรและพร้อมขยายในอนาคต</p>
+<div class="meta">ADVANCE NETWORK CCTV　·　คู่มือระบบเครือข่ายสำหรับงาน CCTV</div>
+</div></section>
+<div class="container article-wrap">
+<article class="content">
+<p class="lead">การติดตั้งกล้อง IP Camera ไม่ได้จบแค่การเลือกกล้องและเครื่องบันทึกภาพ แต่ต้องออกแบบเครือข่ายให้รองรับการรับส่งข้อมูลและการจ่ายไฟอย่างเหมาะสมด้วย หากระบบ Network ไม่พร้อม อาจเกิดภาพกระตุก กล้องหลุด หรือบันทึกภาพไม่ต่อเนื่องได้</p>
+<figure><img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1300&q=85" alt="ตู้แร็กอุปกรณ์ Network และ Server"><figcaption>โครงสร้าง Network ที่เป็นระเบียบช่วยให้ตรวจสอบและบำรุงรักษาระบบ CCTV ได้ง่าย</figcaption></figure>
+
+<h2 id="topology">1. ทำความเข้าใจโครงสร้างระบบ IP Camera</h2>
+<p>ระบบพื้นฐานประกอบด้วยกล้อง IP Camera, PoE Switch, NVR และ Router / Gateway โดยกล้องส่งข้อมูลภาพผ่านสาย LAN ไปยัง Switch จากนั้นส่งต่อไปยัง NVR เพื่อบันทึกภาพ ส่วน Router / Gateway ทำหน้าที่จัดการเครือข่ายและเชื่อมต่ออินเทอร์เน็ตตามการออกแบบ</p>
+<div class="diagram">
+<h3>ตัวอย่างโครงสร้างระบบ IP Camera</h3>
+<div class="flow">
+<div class="node"><div class="ico">🌐</div><b>Internet</b><small>การเชื่อมต่อภายนอก</small></div>
+<div class="node"><div class="ico">🛡️</div><b>Router / Gateway</b><small>จัดการ IP และเส้นทางเครือข่าย</small></div>
+<div class="node"><div class="ico">🔀</div><b>PoE Switch</b><small>รับส่งข้อมูลและจ่ายไฟให้กล้อง</small></div>
+<div class="node"><div class="ico">📷</div><b>IP Camera</b><small>จับภาพและส่งข้อมูล</small></div>
+</div>
+<p class="diagram-note">เชื่อมต่อ NVR เข้ากับ Switch หรือเครือข่ายกล้องตามแบบที่ออกแบบ เพื่อรับภาพและบันทึกข้อมูล</p>
+</div>
+<p>ในระบบจริง NVR อาจเชื่อมต่อเข้ากับ PoE Switch โดยตรง หรือใช้พอร์ตเครือข่ายแยกตามความสามารถของอุปกรณ์ ควรตรวจสอบคู่มือและโครงสร้าง IP ก่อนตั้งค่า</p>
+
+<h2 id="cable">2. เลือกสาย LAN ให้เหมาะกับกล้อง IP Camera</h2>
+<p>สาย LAN ใช้ทั้งรับส่งข้อมูลและจ่ายไฟ PoE จึงควรเลือกสายทองแดงแท้ที่ได้มาตรฐาน เหมาะกับสภาพแวดล้อมและระยะติดตั้ง หลีกเลี่ยงสาย CCA สำหรับงาน PoE ที่ต้องการความน่าเชื่อถือ</p>
+<div class="spec-grid">
+<div class="spec"><b>Cat5e · 100 MHz</b><p>รองรับ Gigabit Ethernet ในระยะตามมาตรฐาน เหมาะกับระบบ IP Camera ทั่วไป</p></div>
+<div class="spec"><b>Cat6 · 250 MHz</b><p>มีคุณสมบัติด้านสัญญาณรบกวนที่ดีขึ้นเมื่อเข้าระบบอย่างถูกต้อง เหมาะกับงานใหม่และการเผื่อขยายระบบ</p></div>
+</div>
+<figure><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1300&q=85" alt="สาย Ethernet และสายสัญญาณเครือข่าย"><figcaption>เลือกสายทองแดงแท้และอุปกรณ์เข้าหัวที่ได้มาตรฐาน เพื่อให้ PoE ทำงานได้มั่นคง</figcaption></figure>
+<p>ระยะ Channel ของ Ethernet แบบ Twisted Pair โดยทั่วไปไม่ควรเกิน 100 เมตร แบ่งเป็น Permanent Link สูงสุด 90 เมตร และ Patch Cord รวมไม่เกิน 10 เมตร หากต้องเดินไกลกว่านี้ให้พิจารณา Fiber Optic หรือจุดกระจายสัญญาณเพิ่มเติม</p>
+
+<h2 id="poe">3. เลือก PoE Switch ให้เพียงพอกับจำนวนกล้อง</h2>
+<p>PoE Switch ส่งข้อมูลและจ่ายไฟผ่านสาย LAN เส้นเดียวกัน ช่วยลดการเดินสายไฟแยก แต่ต้องตรวจสอบทั้งจำนวนพอร์ต มาตรฐาน PoE และกำลังไฟรวม (PoE Budget)</p>
+<ul><li><b>จำนวน Port:</b> ต้องพอกับกล้องและอุปกรณ์ที่ต้องเชื่อมต่อ พร้อมเผื่อการขยาย</li><li><b>PoE Budget:</b> กำลังไฟรวมที่ Switch จ่ายได้ ต้องมากกว่าความต้องการรวมของกล้อง</li><li><b>มาตรฐาน PoE:</b> ตรวจสอบว่าอุปกรณ์รองรับ IEEE 802.3af, 802.3at หรือ 802.3bt ตรงกัน</li><li><b>Uplink:</b> ตรวจสอบความเร็วพอร์ตเชื่อมต่อไปยัง NVR หรือ Core Switch</li></ul>
+<figure><img src="https://images.unsplash.com/photo-1601737487795-dab272f52420?auto=format&fit=crop&w=1300&q=85" alt="อุปกรณ์สวิตช์เครือข่ายในตู้แร็ก"><figcaption>เลือก PoE Switch โดยดูทั้งจำนวนพอร์ตและกำลังไฟรวม ไม่ใช่ดูเพียงจำนวนกล้องที่ต่อได้</figcaption></figure>
+<div class="callout"><b>ตัวอย่างคำนวณ PoE Budget:</b><br>กล้อง 8 ตัว ใช้กำลังไฟสูงสุดตัวละ 12W จะต้องใช้กำลังไฟรวม 8 × 12 = 96W ควรเลือก Switch ที่มี PoE Budget สูงกว่า 96W และเผื่อกำลังไฟสำหรับช่วงที่กล้องเปิดไฟส่องสว่างหรือใช้ฟังก์ชันเสริม</div>
+
+<h2 id="bandwidth">4. คำนวณ Bandwidth ให้เพียงพอกับจำนวนกล้อง</h2>
+<p>กล้องแต่ละตัวส่งข้อมูลภาพเข้าสู่ระบบตลอดเวลา ปริมาณข้อมูลขึ้นอยู่กับความละเอียด Frame Rate, Codec, Bitrate และลักษณะภาพที่กล้องบันทึก</p>
+<div class="callout"><b>ตัวอย่าง:</b> กล้อง 4MP จำนวน 8 ตัว ตั้ง Bitrate เฉลี่ยตัวละ 4Mbps<br>8 × 4Mbps = <b>32Mbps</b><br>ระบบต้องรองรับข้อมูลภาพขาเข้าจากกล้องประมาณ 32Mbps และควรเผื่อ Bandwidth สำหรับการดูภาพสด เล่นย้อนหลัง และการใช้งานอื่น ๆ</div>
+<p>ควรตรวจสอบ Switching Capacity, Forwarding Performance และความเร็ว Uplink ของ Switch รวมถึง Incoming Bandwidth ของ NVR ด้วย เพราะพอร์ตกล้องที่เป็น Gigabit ไม่ได้แปลว่าทุกส่วนของระบบจะรองรับได้เพียงพอโดยอัตโนมัติ</p>
+
+<h2 id="vlan">5. ใช้ VLAN แยกเครือข่ายเพื่อความเป็นระเบียบและปลอดภัย</h2>
+<p>ในสำนักงานหรือโรงงานที่ใช้งานเครือข่ายร่วมกันหลายประเภท การแยก VLAN ช่วยแบ่งกลุ่มอุปกรณ์และกำหนดสิทธิ์การเข้าถึงได้ชัดเจนขึ้น</p>
+<table class="compare"><thead><tr><th>ตัวอย่าง VLAN</th><th>การใช้งาน</th></tr></thead><tbody><tr><td>VLAN 10</td><td>คอมพิวเตอร์สำนักงาน</td></tr><tr><td>VLAN 20</td><td>ระบบ IP Camera</td></tr><tr><td>VLAN 30</td><td>Wi-Fi สำหรับผู้ใช้งาน</td></tr><tr><td>VLAN 40</td><td>Server และระบบส่วนกลาง</td></tr></tbody></table>
+<p>การใช้งาน VLAN ต้องตั้งค่าบน Managed Switch และ Router / Layer 3 Gateway ให้สอดคล้องกัน รวมถึงกำหนด Firewall Rule หรือ ACL ให้ NVR และผู้ดูแลเข้าถึงกล้องได้เฉพาะที่จำเป็น ไม่ควรเปิดให้ทุก VLAN ติดต่อกันได้ทั้งหมด</p>
+
+<h2 id="nvr">6. เลือก NVR และ Hard Disk ให้เหมาะสม</h2>
+<figure><img src="https://images.unsplash.com/photo-1597852074816-d933c7d2b988?auto=format&fit=crop&w=1300&q=85" alt="ระบบจัดเก็บข้อมูลและเครื่องแม่ข่าย"><figcaption>ตรวจสอบ Incoming Bandwidth และความจุจัดเก็บข้อมูลของ NVR ให้เหมาะกับจำนวนกล้อง</figcaption></figure>
+<p>ก่อนเลือก NVR ควรตรวจสอบจำนวน Channel, Incoming Bandwidth, ความละเอียดที่รองรับ, จำนวนช่อง Hard Disk และความเข้ากันได้กับกล้อง</p>
+<p><b>ตัวอย่างการคำนวณพื้นที่จัดเก็บ:</b> กล้อง 8 ตัว Bitrate ตัวละ 4Mbps บันทึกต่อเนื่อง 24 ชั่วโมง จะใช้ข้อมูลประมาณ 345.6GB ต่อวัน หรือประมาณ 10.37TB สำหรับ 30 วัน (ค่าประมาณแบบหน่วยฐานสิบ) ควรเผื่อพื้นที่และตรวจสอบความจุใช้งานจริงของ Hard Disk ด้วย</p>
+
+<h2 id="remote">7. วางระบบให้ดูภาพผ่านมือถือได้อย่างปลอดภัย</h2>
+<p>การดูภาพจากภายนอกต้องคำนึงถึง Internet, Gateway, DNS, การกำหนด IP และสิทธิ์ผู้ใช้งาน ควรใช้ Cloud / P2P ของผู้ผลิตหรือ VPN ที่ตั้งค่าอย่างปลอดภัย หลีกเลี่ยงการเปิด Port ของกล้องหรือ NVR สู่อินเทอร์เน็ตโดยตรงโดยไม่จำเป็น</p>
+<div class="callout"><b>ข้อควรรู้:</b> หากอินเทอร์เน็ตภายนอกขัดข้อง ระบบบันทึกภายใน LAN ยังสามารถทำงานต่อได้ หาก Switch, NVR และระบบไฟฟ้ายังปกติ แต่การดูภาพจากนอกสถานที่จะใช้งานไม่ได้จนกว่าการเชื่อมต่อจะกลับมา</div>
+
+<h2 id="testing">8. ตรวจสอบระบบก่อนส่งมอบงาน</h2>
+<div class="steps">
+<div class="step"><div><b>ตรวจสอบสายและ Link</b><span>ทดสอบสาย LAN, การเข้าหัว, Link Speed และคุณภาพการเชื่อมต่อ</span></div></div>
+<div class="step"><div><b>ตรวจสอบไฟ PoE</b><span>ยืนยันกำลังไฟและ PoE Budget เพียงพอสำหรับกล้องทุกตัว</span></div></div>
+<div class="step"><div><b>ตรวจสอบภาพและการบันทึก</b><span>ทดสอบ Live View, Playback และการบันทึกต่อเนื่อง</span></div></div>
+<div class="step"><div><b>ทดสอบการดูภาพจากภายนอก</b><span>ตรวจสอบแอปมือถือ สิทธิ์ผู้ใช้ และการเชื่อมต่อระยะไกล</span></div></div>
+<div class="step"><div><b>จัดทำข้อมูลส่งมอบ</b><span>บันทึก IP Address, VLAN, ผังระบบ และข้อมูลอุปกรณ์สำหรับการดูแลในอนาคต</span></div></div>
+</div>
+
+<h2 id="summary">สรุป: ระบบ IP Camera ที่ดี เริ่มจาก Network ที่ออกแบบถูกต้อง</h2>
+<p>ระบบกล้อง IP Camera ที่มีประสิทธิภาพต้องอาศัยการออกแบบร่วมกันทั้งสาย LAN, PoE Switch, Bandwidth, VLAN, NVR และระบบจัดเก็บข้อมูล การวางแผนตั้งแต่ต้นช่วยลดปัญหาการเชื่อมต่อ เพิ่มความเสถียร และรองรับการขยายระบบในอนาคต</p>
+<div class="cta"><div class="eyebrow">ADVANCE NETWORK CCTV</div><h2>ต้องการติดตั้งกล้อง IP พร้อมระบบ Network?</h2><p>ให้ทีมงานช่วยสำรวจหน้างาน ออกแบบเครือข่าย และเลือกอุปกรณ์ให้เหมาะกับจำนวนกล้อง พื้นที่ และงบประมาณของคุณ</p><a class="btn" href="tel:0945454291">โทรปรึกษา 094-545-4291</a> <a class="btn" href="https://lin.ee/Xa6OI5f" target="_blank" rel="noopener noreferrer">ติดต่อผ่าน LINE</a></div>
+</article>
+<aside class="toc"><strong>เนื้อหาในบทความ</strong><nav>
+<a href="#topology">1. โครงสร้างระบบ IP</a><a href="#cable">2. สาย LAN</a><a href="#poe">3. PoE Switch</a><a href="#bandwidth">4. Bandwidth</a><a href="#vlan">5. VLAN</a><a href="#nvr">6. NVR และ Hard Disk</a><a href="#remote">7. ดูภาพผ่านมือถือ</a><a href="#testing">8. ตรวจสอบก่อนส่งมอบ</a><a href="#summary">สรุปและติดต่อ</a>
+</nav></aside>
+</div></main>
+<footer class="footer"><div class="container footer-row"><span>© <span id="year"></span> Advance Network. All rights reserved.</span><a href="../index.html#knowledge">← กลับไปยังบทความและความรู้</a></div></footer>
+<script>document.getElementById('year').textContent=new Date().getFullYear();</script>
+</body></html>
