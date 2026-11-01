@@ -33,12 +33,12 @@ footer{background:#041226;color:#9fb3c9;padding:20px 0;font-size:11px;text-align
 <p class="sub">กรอกเลขที่ใบรับประกัน หรือรหัสงานติดตั้ง เช่น AN-2026-00125</p>
 <form id="warrantyForm">
 <div class="formrow">
-<div class="field"><label for="warrantyCode">เลขที่ใบรับประกัน / รหัสงานติดตั้ง</label><input id="warrantyCode" name="warrantyCode" type="text" placeholder="กรอกรหัสของคุณ" autocomplete="off" required></div>
+<div class="field"><label for="warrantyCode">เลขที่ใบรับประกัน / รหัสงานติดตั้ง</label><input id="warrantyCode" name="warrantyCode" type="text" placeholder="เช่น AN-2026-00125" autocomplete="off"></div><div class="field"><label for="warrantyPhone">หรือเบอร์โทรศัพท์ที่ลงทะเบียน</label><input id="warrantyPhone" name="warrantyPhone" type="tel" placeholder="กรอกเบอร์โทรศัพท์" autocomplete="tel"></div>
 <button class="btn" type="submit">ตรวจสอบประกัน　→</button>
 </div>
 <p class="hint">หากไม่พบรหัส หรือยังไม่ได้รับใบรับประกัน กรุณาติดต่อทีมงานพร้อมแจ้งชื่อและเบอร์โทรศัพท์ที่ลงทะเบียนไว้</p>
 </form>
-<div class="notice"><span>ⓘ</span><div><b>ระบบกำลังเตรียมเชื่อมต่อฐานข้อมูลประกัน</b>หน้านี้เป็นหน้าแสดงผลและแบบฟอร์มเบื้องต้น ยังไม่ได้เชื่อมกับข้อมูลประกันจริง จึงยังไม่แสดงผลสถานะจากการค้นหา</div></div>
+<div id="lookupMessage" class="notice"><span>ⓘ</span><div><b>ค้นหาข้อมูลการรับประกัน</b>กรอกเลขที่ใบรับประกัน หรือเบอร์โทรศัพท์ แล้วกดตรวจสอบ</div></div><div id="lookupResults"></div>
 </section>
 <section class="steps" aria-label="ขั้นตอนการตรวจสอบ">
 <div class="step"><div class="stepnum">1</div><h3>เตรียมรหัสรับประกัน</h3><p>ใช้เลขที่ใบรับประกันหรือรหัสงานที่ได้รับจาก Advance Network</p></div>
@@ -48,9 +48,16 @@ footer{background:#041226;color:#9fb3c9;padding:20px 0;font-size:11px;text-align
 <section class="support"><div><strong>ต้องการความช่วยเหลือเรื่องประกัน?</strong><p>ติดต่อทีมงาน Advance Network เพื่อสอบถามหรือแจ้งปัญหาการรับประกัน</p></div><a href="https://lin.ee/Xa6OI5f" target="_blank" rel="noopener noreferrer">ติดต่อผ่าน LINE</a></section>
 </main>
 <footer>© <span id="year"></span> Advance Network CCTV. All rights reserved.</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 document.getElementById('year').textContent=new Date().getFullYear();
-document.getElementById('warrantyForm').addEventListener('submit',function(e){e.preventDefault();const code=document.getElementById('warrantyCode').value.trim();if(!code)return;alert('ได้รับรหัส '+code+' แล้วครับ\nระบบตรวจสอบประกันกำลังรอเชื่อมต่อฐานข้อมูลจริง หากต้องการตรวจสอบตอนนี้ กรุณาติดต่อทีมงานผ่าน LINE');});
+const SUPABASE_URL='https://uqwubpdolhrxtavkuzvg.supabase.co';
+const SUPABASE_ANON_KEY='PASTE_PUBLIC_ANON_OR_PUBLISHABLE_KEY_HERE';
+const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const form=document.getElementById('warrantyForm'),msg=document.getElementById('lookupMessage'),results=document.getElementById('lookupResults');
+const esc=s=>String(s??'—').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=d=>d?new Date(d+'T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}):'—';
+form.addEventListener('submit',async e=>{e.preventDefault();const code=document.getElementById('warrantyCode').value.trim(),phone=document.getElementById('warrantyPhone').value.trim();if(!code&&!phone){msg.innerHTML='<span>ⓘ</span><div><b>กรุณากรอกรหัสหรือเบอร์โทรศัพท์</b></div>';return}if(SUPABASE_ANON_KEY.includes('PASTE_')){msg.innerHTML='<span>ⓘ</span><div><b>ยังไม่ได้ตั้งค่าฐานข้อมูล</b>ผู้ดูแลต้องใส่ public key และติดตั้งฐานข้อมูลก่อน</div>';return}msg.innerHTML='<span>⌛</span><div><b>กำลังค้นหาข้อมูล…</b></div>';results.innerHTML='';const {data,error}=await client.rpc('lookup_warranty',{p_code:code||null,p_phone:phone||null});if(error){msg.innerHTML='<span>⚠</span><div><b>ค้นหาไม่สำเร็จ</b>'+esc(error.message)+'</div>';return}if(!data||!data.length){msg.innerHTML='<span>ⓘ</span><div><b>ไม่พบข้อมูลการรับประกัน</b>ตรวจสอบรหัสหรือเบอร์โทรศัพท์อีกครั้ง</div>';return}msg.innerHTML='<span>✓</span><div><b>พบข้อมูลการรับประกัน</b></div>';results.innerHTML=data.map(r=>{const active=r.status==='active',status=r.status==='cancelled'?'ยกเลิก':r.status==='pending'?'รอตรวจสอบ':active?'อยู่ในประกัน':'หมดประกัน';return '<article style="margin-top:16px;background:white;border:1px solid #e3eaf1;border-radius:16px;padding:22px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 style="margin:0;font-family:Kanit">ใบรับประกัน '+esc(r.warranty_code)+'</h3><strong style="color:'+(active?'#16834b':'#b45309')+'">'+status+'</strong></div><p><b>ลูกค้า:</b> '+esc(r.customer_name)+'</p><p><b>ประเภทงาน:</b> '+esc(r.job_type)+'　<b>จำนวน:</b> '+esc(r.quantity)+'</p><p><b>รายละเอียด:</b> '+esc(r.job_description)+'</p><hr><h4>ประกันสินค้า</h4><p>เริ่ม '+fmt(r.product_warranty_start)+'　ถึง '+fmt(r.product_warranty_end)+'</p><h4>ประกันงานติดตั้ง</h4><p>เริ่ม '+fmt(r.installation_warranty_start)+'　ถึง '+fmt(r.installation_warranty_end)+'</p><p><b>ยี่ห้อ/รุ่น:</b> '+esc(r.product_brand)+' / '+esc(r.product_model)+'</p><p><b>เงื่อนไข:</b> '+esc(r.terms)+'</p></article>'}).join('')});
 </script>
 </body>
 </html>
