@@ -43,7 +43,10 @@ footer{background:#06172e;color:#aebfd1;padding:22px 0;font-size:12px}
 <footer><div class="wrap">© <span id="year"></span> Advance Network CCTV. All rights reserved.</div></footer><script>
 document.getElementById('year').textContent=new Date().getFullYear();
 const lightbox=document.getElementById('imageLightbox'),largeImage=document.getElementById('lightboxImage'),caption=document.getElementById('lightboxCaption');
-document.querySelectorAll('.feature img').forEach(img=>{img.addEventListener('click',()=>{largeImage.src=img.currentSrc||img.src;largeImage.alt=img.alt||'ภาพบริการ';caption.textContent=img.closest('.feature').querySelector('h3')?.textContent||img.alt;lightbox.classList.add('open');document.body.style.overflow='hidden';document.getElementById('lightboxClose').focus();});});
+document.querySelectorAll('.feature img').forEach(img=>{img.style.cursor='zoom-in';img.setAttribute('tabindex','0');img.setAttribute('role','button');img.setAttribute('aria-label','คลิกเพื่อดูภาพขนาดใหญ่');});
+function openImage(img){largeImage.src=img.currentSrc||img.src;largeImage.alt=img.alt||'ภาพบริการ';var card=img.closest('.feature');var heading=card?card.querySelector('h3'):null;caption.textContent=heading?heading.textContent:(img.alt||'');lightbox.classList.add('open');document.body.style.overflow='hidden';}
+document.addEventListener('click',function(e){var img=e.target.closest('.feature img');if(img){e.preventDefault();openImage(img);}});
+document.addEventListener('keydown',function(e){var img=e.target.closest&&e.target.closest('.feature img');if(img&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openImage(img);}});
 function closeLightbox(){lightbox.classList.remove('open');largeImage.removeAttribute('src');document.body.style.overflow='';}
 document.getElementById('lightboxClose').addEventListener('click',closeLightbox);
 lightbox.addEventListener('click',e=>{if(e.target===lightbox)closeLightbox();});
