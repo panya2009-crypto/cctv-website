@@ -52,7 +52,7 @@ footer{background:#041226;color:#9fb3c9;padding:20px 0;font-size:11px;text-align
 <script>
 document.getElementById('year').textContent=new Date().getFullYear();
 const SUPABASE_URL='https://uqwubpdolhrxtavkuzvg.supabase.co';
-const SUPABASE_ANON_KEY='PASTE_PUBLIC_ANON_OR_PUBLISHABLE_KEY_HERE';
+const SUPABASE_ANON_KEY='sb_publishable_VcGIlWbzb2Y6EQC2SvQAFA_y2cICvPO';
 const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const form=document.getElementById('warrantyForm'),msg=document.getElementById('lookupMessage'),results=document.getElementById('lookupResults');
 const esc=s=>String(s??'—').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
