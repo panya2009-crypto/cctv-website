@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420" role="img" aria-labelledby="t d">
+<title id="t">เลือกกล้องวงจรปิดให้เหมาะกับหน้างาน — Advance Network</title>
+<desc id="d">ภาพประกอบกล้อง Dome, Bullet, Turret และ PTZ พร้อมตัวอย่างพื้นที่บ้าน สำนักงาน ลานจอดรถ และกลางคืน</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#06162d"/><stop offset=".55" stop-color="#0b3158"/><stop offset="1" stop-color="#071a33"/></linearGradient>
+  <linearGradient id="orange" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ff9d16"/><stop offset="1" stop-color="#f45109"/></linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".6" stop-color="#dce7f2"/><stop offset="1" stop-color="#91a8be"/></linearGradient>
+  <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1c405e"/><stop offset=".45" stop-color="#050d19"/><stop offset="1" stop-color="#304b64"/></linearGradient>
+  <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#18c8ee"/><stop offset="1" stop-color="#4a9dff"/></linearGradient>
+  <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8"/></filter>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="900" height="420" rx="22" fill="url(#bg)"/>
+<path d="M345 0H900V420H310C380 315 367 145 345 0Z" fill="#0d2948" opacity=".65"/>
+<path d="M0 348C180 315 260 380 420 420H0Z" fill="#0c2543"/>
+<path d="M0 352C180 320 270 385 425 420" fill="none" stroke="url(#orange)" stroke-width="7"/>
+<path d="M335 0L310 420" stroke="#2b6d9d" stroke-width="2" opacity=".45"/>
+
+<!-- Advance Network brand mark -->
+<path d="M34 70L55 24L78 70H61L55 55L48 70Z" fill="#ff790d"/>
+<path d="M34 70Q55 48 83 59L97 76H79L70 67Q55 62 43 78Z" fill="#082e57"/>
+<text x="105" y="48" fill="#fff" font-family="Arial,Tahoma,sans-serif" font-size="27" font-weight="700">Advance</text>
+<text x="214" y="48" fill="#ff7a12" font-family="Arial,Tahoma,sans-serif" font-size="27" font-weight="700">Network</text>
+<path d="M105 57H318" stroke="url(#orange)" stroke-width="2"/>
+<text x="105" y="74" fill="#dce8f4" font-family="Arial,Tahoma,sans-serif" font-size="11" letter-spacing="1.3" font-weight="700">CCTV &amp; NETWORK SOLUTIONS</text>
+
+<!-- Heading -->
+<text x="34" y="145" fill="#fff" font-family="Tahoma,Arial,sans-serif" font-size="34" font-weight="700">เลือกกล้องให้เหมาะ</text>
+<text x="34" y="190" fill="#fff" font-family="Tahoma,Arial,sans-serif" font-size="34" font-weight="700">กับหน้างาน</text>
+<rect x="34" y="207" width="230" height="5" rx="2.5" fill="url(#orange)"/>
+<text x="35" y="242" fill="#b9d3e8" font-family="Tahoma,Arial,sans-serif" font-size="16">เลือกจากพื้นที่ ระยะ และแสง</text>
+
+<!-- Place tiles -->
+<g transform="translate(32 275)">
+  <rect width="66" height="82" rx="12" fill="#123c63" stroke="#2b9fd0"/>
+  <path d="M16 38L33 23L50 38M21 35V55H45V35M29 55V44H37V55" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="33" y="72" fill="#fff" font-family="Tahoma,Arial,sans-serif" font-size="12" text-anchor="middle">บ้าน</text>
+</g>
+<g transform="translate(108 275)">
+  <rect width="66" height="82" rx="12" fill="#123c63" stroke="#2b9fd0"/>
+  <rect x="18" y="24" width="30" height="32" rx="2" fill="none" stroke="#fff" stroke-width="2"/>
+  <path d="M24 31h5v5h-5zm12 0h5v5h-5zm-12 11h5v5h-5zm12 0h5v5h-5zM28 56V49h10v7" fill="none" stroke="#fff" stroke-width="1.8"/>
+  <text x="33" y="72" fill="#fff" font-family="Tahoma,Arial,sans-serif" font-size="12" text-anchor="middle">สำนักงาน</text>
+</g>
+<g transform="translate(184 275)">
+  <rect width="66" height="82" rx="12" fill="#123c63" stroke="#2b9fd0"/>
+  <path d="M12 47h42l-4-13H22l-10 13Zm5 0v7m32-7v7" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="23" cy="51" r="4" fill="#fff"/><circle cx="44" cy="51" r="4" fill="#fff"/>
+  <text x="33" y="72" fill="#fff" font-family="Tahoma,Arial,sans-serif" font-size="12" text-anchor="middle">ลานจอดรถ</text>
+</g>
+<g transform="translate(260 275)">
+  <rect width="66" height="82" rx="12" fill="#123c63" stroke="#2b9fd0"/>
+  <path d="M43 25a14 14 0 1 0 8 22A16 16 0 0 1 43 25Z" fill="#fff"/>
+  <circle cx="21" cy="27" r="2" fill="#ffbd55"/><circle cx="28" cy="18" r="1.5" fill="#ffbd55"/>
+  <text x="33" y="72" fill="#fff" font-family="Tahoma,Arial,sans-serif" font-size="12" text-anchor="middle">กลางคืน</text>
+</g>
+
+<!-- Camera showcase zone -->
+<g opacity=".9">
+  <rect x="374" y="34" width="492" height="318" rx="22" fill="#0b2847" stroke="#2d6d9e" stroke-width="1.5"/>
+  <path d="M390 145L850 145M390 255L850 255" stroke="#2e6891" stroke-width="1" opacity=".5"/>
+  <path d="M500 48V338M620 48V338M742 48V338" stroke="#2e6891" stroke-width="1" opacity=".35"/>
+  <circle cx="442" cy="90" r="33" fill="#1b5c83" opacity=".35"/>
+  <circle cx="803" cy="90" r="40" fill="#1b5c83" opacity=".25"/>
+</g>
+
+<!-- Dome camera -->
+<g transform="translate(405 64)">
+  <ellipse cx="49" cy="91" rx="57" ry="17" fill="#000" opacity=".28" filter="url(#shadow)"/>
+  <rect x="40" y="4" width="18" height="19" rx="4" fill="#9fb3c6"/>
+  <path d="M8 30Q10 4 49 4T90 30L84 59Q49 75 14 59Z" fill="url(#glass)" stroke="#92a8bb" stroke-width="2"/>
+  <path d="M14 55Q49 73 84 55L79 82Q49 103 19 82Z" fill="#0b1a2b" stroke="#d6e0e9" stroke-width="2"/>
+  <circle cx="49" cy="73" r="16" fill="url(#lens)" stroke="#8ea3b5" stroke-width="2"/>
+  <circle cx="49" cy="73" r="5" fill="#1d7da8"/>
+  <text x="49" y="119" fill="#d7e7f4" font-size="12" text-anchor="middle" font-family="Arial">DOME</text>
+</g>
+
+<!-- Turret camera -->
+<g transform="translate(520 166)">
+  <ellipse cx="43" cy="84" rx="50" ry="15" fill="#000" opacity=".28" filter="url(#shadow)"/>
+  <rect x="35" y="1" width="16" height="18" rx="4" fill="#93a8bb"/>
+  <path d="M2 27Q4 0 43 0T84 27L78 55Q43 74 8 55Z" fill="url(#glass)" stroke="#90a7bb" stroke-width="2"/>
+  <path d="M9 51Q43 68 77 51L70 82H16Z" fill="#111e2a" stroke="#c8d4df" stroke-width="2"/>
+  <rect x="29" y="43" width="28" height="26" rx="7" fill="#080e18" stroke="#677f95"/>
+  <circle cx="43" cy="54" r="8" fill="url(#lens)"/><circle cx="43" cy="54" r="3" fill="#45bce9"/>
+  <text x="43" y="108" fill="#d7e7f4" font-size="12" text-anchor="middle" font-family="Arial">TURRET</text>
+</g>
+
+<!-- Bullet camera -->
+<g transform="translate(636 69)">
+  <ellipse cx="85" cy="92" rx="91" ry="15" fill="#000" opacity=".28" filter="url(#shadow)"/>
+  <path d="M13 35H145Q162 35 166 51V75Q162 91 145 91H13Q0 91 0 63T13 35Z" fill="url(#glass)" stroke="#a5b9ca" stroke-width="2"/>
+  <path d="M0 45Q-13 46 -13 63T0 81H32V45Z" fill="#142130" stroke="#869db0" stroke-width="2"/>
+  <circle cx="8" cy="63" r="13" fill="url(#lens)" stroke="#7f95a9" stroke-width="2"/>
+  <circle cx="8" cy="63" r="4" fill="#29b6e8"/>
+  <rect x="137" y="38" width="13" height="50" rx="5" fill="#bdcbd7"/>
+  <path d="M62 91v12h23V91" fill="none" stroke="#91a6b8" stroke-width="4"/>
+  <text x="78" y="121" fill="#d7e7f4" font-size="12" text-anchor="middle" font-family="Arial">BULLET</text>
+</g>
+
+<!-- PTZ camera -->
+<g transform="translate(770 175)">
+  <ellipse cx="39" cy="86" rx="48" ry="15" fill="#000" opacity=".28" filter="url(#shadow)"/>
+  <rect x="30" y="0" width="18" height="26" rx="4" fill="#94aabc"/>
+  <path d="M2 20Q39 -1 76 20V43Q39 59 2 43Z" fill="url(#glass)" stroke="#9eb3c5" stroke-width="2"/>
+  <path d="M10 43Q39 52 68 43V72Q68 98 39 98T10 72Z" fill="#0d1a28" stroke="#a4b8c8" stroke-width="2"/>
+  <circle cx="39" cy="67" r="18" fill="url(#lens)" stroke="#8198ae" stroke-width="2"/>
+  <circle cx="39" cy="67" r="6" fill="#29b6e8"/>
+  <circle cx="25" cy="89" r="3" fill="#ffd06d"/><circle cx="53" cy="89" r="3" fill="#ffd06d"/>
+  <text x="39" y="119" fill="#d7e7f4" font-size="12" text-anchor="middle" font-family="Arial">PTZ</text>
+</g>
+
+<path d="M380 377H865" stroke="url(#orange)" stroke-width="5" stroke-linecap="round"/>
+<text x="623" y="401" fill="#dbe9f5" font-family="Tahoma,Arial,sans-serif" font-size="13" text-anchor="middle">เลือกมุมมอง • ระยะ • แสง ให้ตรงกับพื้นที่</text>
+</svg>
