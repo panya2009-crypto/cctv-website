@@ -79,7 +79,7 @@ function renderMaintenancePdfStatus(){
     let html='';
     saved.forEach(path=>{
       const url=maintenancePdfPublicUrl(path),isRemoved=removed.includes(path);
-      html+='<span style="display:inline-flex;align-items:center;gap:5px;margin:4px;padding:5px;border:1px solid #dbe5ef;border-radius:8px;'+(isRemoved?'opacity:.4;text-decoration:line-through':'')+'"><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer"><img src="'+esc(url)+'" alt="Maintenance '+(i+1)+'" style="width:76px;height:58px;object-fit:cover;border-radius:5px;vertical-align:middle"></a><button type="button" data-remove-maintenance-image="'+i+'" data-path="'+esc(path)+'">'+(isRemoved?'ทำเครื่องหมายลบแล้ว':'ลบ')+'</button></span>';
+      html+='<span style="display:inline-flex;align-items:center;gap:5px;margin:4px;padding:5px;border:1px solid #dbe5ef;border-radius:8px;'+(isRemoved?'opacity:.4;text-decoration:line-through':'')+'"><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+(path.toLowerCase().endsWith('.pdf')?'เปิด PDF เดิม':'<img src="'+esc(url)+'" alt="Maintenance '+(i+1)+'" style="width:76px;height:58px;object-fit:cover;border-radius:5px;vertical-align:middle">')+'</a><button type="button" data-remove-maintenance-image="'+i+'" data-path="'+esc(path)+'">'+(isRemoved?'ทำเครื่องหมายลบแล้ว':'ลบ')+'</button></span>';
     });
     if(files.length)html+='<div class="pending">เลือกรูปใหม่ '+files.length+' รูป: '+files.map(f=>esc(f.name)).join(', ')+'</div>';
     if(!html)html='<span>ยังไม่มีรูปภาพ</span>';
