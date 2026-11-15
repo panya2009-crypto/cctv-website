@@ -22,12 +22,12 @@
     <div class="field"><label for="maintenance_date_4">วันเข้าบำรุงรักษา ครั้งที่ 4</label><input id="maintenance_date_4" type="date"></div>
   </div>
   <div class="maintenance-documents-grid" id="maintenanceDocuments">
-    <div class="maintenance-doc-item"><label for="maintenance_pdf_1">รูปภาพ Maintenance ครั้งที่ 1</label><input id="maintenance_pdf_1" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><div class="maintenance-file-status" id="maintenance_pdf_status_1">ยังไม่มีรูปภาพ</div></div>
-    <div class="maintenance-doc-item"><label for="maintenance_pdf_2">รูปภาพ Maintenance ครั้งที่ 2</label><input id="maintenance_pdf_2" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><div class="maintenance-file-status" id="maintenance_pdf_status_2">ยังไม่มีรูปภาพ</div></div>
-    <div class="maintenance-doc-item"><label for="maintenance_pdf_3">รูปภาพ Maintenance ครั้งที่ 3</label><input id="maintenance_pdf_3" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><div class="maintenance-file-status" id="maintenance_pdf_status_3">ยังไม่มีรูปภาพ</div></div>
-    <div class="maintenance-doc-item"><label for="maintenance_pdf_4">รูปภาพ Maintenance ครั้งที่ 4</label><input id="maintenance_pdf_4" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><div class="maintenance-file-status" id="maintenance_pdf_status_4">ยังไม่มีรูปภาพ</div></div>
+    <div class="maintenance-doc-item"><label for="maintenance_pdf_1">รูปภาพ Maintenance ครั้งที่ 1 (เลือกได้หลายรูป)</label><input id="maintenance_pdf_1" type="file" multiple accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><div class="maintenance-file-status" id="maintenance_pdf_status_1">ยังไม่มีรูปภาพ</div></div>
+    <div class="maintenance-doc-item"><label for="maintenance_pdf_2">รูปภาพ Maintenance ครั้งที่ 2 (เลือกได้หลายรูป)</label><input id="maintenance_pdf_2" type="file" multiple accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><div class="maintenance-file-status" id="maintenance_pdf_status_2">ยังไม่มีรูปภาพ</div></div>
+    <div class="maintenance-doc-item"><label for="maintenance_pdf_3">รูปภาพ Maintenance ครั้งที่ 3 (เลือกได้หลายรูป)</label><input id="maintenance_pdf_3" type="file" multiple accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><div class="maintenance-file-status" id="maintenance_pdf_status_3">ยังไม่มีรูปภาพ</div></div>
+    <div class="maintenance-doc-item"><label for="maintenance_pdf_4">รูปภาพ Maintenance ครั้งที่ 4 (เลือกได้หลายรูป)</label><input id="maintenance_pdf_4" type="file" multiple accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><div class="maintenance-file-status" id="maintenance_pdf_status_4">ยังไม่มีรูปภาพ</div></div>
   </div>
-  <small class="maintenance-note">เลือกรูปภาพ JPG, PNG หรือ WEBP แยกตามครั้งที่เข้าบำรุงรักษา ลูกค้าจะเห็นเฉพาะครั้งที่มีรูปแนบ (ไม่เกิน 10 MB ต่อรูป)</small>
+  <small class="maintenance-note">เพิ่มรูปภาพได้ไม่จำกัดจำนวนในแต่ละครั้ง รองรับ JPG, PNG และ WEBP ขนาดไม่เกิน 10 MB ต่อรูป สามารถเพิ่มรูปใหม่หรือลบรูปเดิมแยกเป็นรายรูปได้</small>
 </div>
 </div>
 <div class="field"><label>วันที่ซื้อ</label><input id="purchase_date" type="date"></div><div class="field"><label>วันที่ติดตั้ง</label><input id="installation_date" type="date"></div><div class="field"><label>จำนวนอุปกรณ์</label><input id="quantity" type="number" min="0"></div>
@@ -48,22 +48,25 @@ const MAINTENANCE_BUCKET='portfolio-images';
 const maintenanceMarker=/\[\[AN_MAINTENANCE_SCHEDULE:([^\]]*)\]\]/;
 const maintenancePdfsMarker=/\[\[AN_MAINTENANCE_PDFS:([^\]]*)\]\]/;
 const maintenanceImagesMarker=/\[\[AN_MAINTENANCE_IMAGES:([^\]]*)\]\]/;
-let maintenancePdfPaths=['','','',''];
-let maintenancePdfRemovals=[false,false,false,false];
+const maintenanceImagesV2Marker=/\[\[AN_MAINTENANCE_IMAGES_V2:([^\]]*)\]\]/;
+let maintenanceImagePaths=[[],[],[],[]],maintenanceImageRemovals=[[],[],[],[]];
 function splitMaintenanceTerms(raw){
-  const text=String(raw||''),schedule=text.match(maintenanceMarker),docs=text.match(maintenanceImagesMarker)||text.match(maintenancePdfsMarker);
-  const dates=schedule?schedule[1].split('|').slice(0,4):[],pdfs=docs?docs[1].split('|').slice(0,4):[];
-  while(dates.length<4)dates.push('');while(pdfs.length<4)pdfs.push('');
-  const terms=text.replace(maintenanceMarker,'').replace(maintenancePdfsMarker,'').replace(maintenanceImagesMarker,'').replace(/\n{3,}/g,'\n\n').trim();
-  return{terms,dates,pdfs};
+  const text=String(raw||''),schedule=text.match(maintenanceMarker),v2=text.match(maintenanceImagesV2Marker),legacy=text.match(maintenanceImagesMarker)||text.match(maintenancePdfsMarker);
+  const dates=schedule?schedule[1].split('|').slice(0,4):[];
+  let images=[[],[],[],[]];
+  if(v2){try{const parsed=JSON.parse(decodeURIComponent(v2[1]));images=Array.from({length:4},(_,i)=>Array.isArray(parsed[i])?parsed[i].filter(Boolean):[]);}catch(e){}}
+  else if(legacy){const old=legacy[1].split('|').slice(0,4);images=Array.from({length:4},(_,i)=>old[i]?[old[i]]:[]);}
+  while(dates.length<4)dates.push('');
+  const terms=text.replace(maintenanceMarker,'').replace(maintenancePdfsMarker,'').replace(maintenanceImagesMarker,'').replace(maintenanceImagesV2Marker,'').replace(/\n{3,}/g,'\n\n').trim();
+  return{terms,dates,images};
 }
-function activeMaintenancePdfPaths(){return maintenancePdfPaths.map((path,i)=>maintenancePdfRemovals[i]?'':path);}
-function withMaintenanceTerms(raw,jobType,dates,pdfPaths){
-  const parsed=splitMaintenanceTerms(raw),clean=parsed.terms,selected=(dates||parsed.dates).map(x=>x||''),docs=(pdfPaths||parsed.pdfs).map(x=>x||'');
+function activeMaintenancePdfPaths(){return maintenanceImagePaths.map((paths,i)=>paths.filter(path=>!maintenanceImageRemovals[i].includes(path)));}
+function withMaintenanceTerms(raw,jobType,dates,imagePaths){
+  const parsed=splitMaintenanceTerms(raw),clean=parsed.terms,selected=(dates||parsed.dates).map(x=>x||''),images=imagePaths||parsed.images;
   if(jobType!=='CCTV')return clean;
   const markers=[];
   if(selected.some(Boolean))markers.push('[[AN_MAINTENANCE_SCHEDULE:'+selected.join('|')+']]');
-  if(docs.some(Boolean))markers.push('[[AN_MAINTENANCE_IMAGES:'+docs.join('|')+']]');
+  if(images.some(list=>list&&list.length))markers.push('[[AN_MAINTENANCE_IMAGES_V2:'+encodeURIComponent(JSON.stringify(images))+']]');
   return clean+(markers.length?(clean?'\n\n':'')+markers.join(''):'');
 }
 function maintenanceDates(){return maintenanceIds.map(id=>$(id).value||'');}
@@ -72,31 +75,39 @@ function setMaintenanceDates(dates){maintenanceIds.forEach((id,i)=>$(id).value=(
 function maintenancePdfPublicUrl(path){if(!sb||!path)return'';return sb.storage.from(MAINTENANCE_BUCKET).getPublicUrl(path).data.publicUrl;}
 function renderMaintenancePdfStatus(){
   maintenancePdfInputIds.forEach((id,i)=>{
-    const box=$('maintenance_pdf_status_'+(i+1)),file=$(id).files&&$(id).files[0],saved=maintenancePdfPaths[i]&&!maintenancePdfRemovals[i];
+    const box=$('maintenance_pdf_status_'+(i+1)),files=Array.from($(id).files||[]),saved=maintenanceImagePaths[i]||[],removed=maintenanceImageRemovals[i]||[];
     let html='';
-    if(saved){const url=maintenancePdfPublicUrl(maintenancePdfPaths[i]);const isOldPdf=maintenancePdfPaths[i].toLowerCase().endsWith('.pdf');html+=(isOldPdf?'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">เปิดเอกสาร PDF เดิม</a>':'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer"><img src="'+esc(url)+'" alt="Maintenance '+(i+1)+'" style="width:76px;height:58px;object-fit:cover;border:1px solid #dbe5ef;border-radius:7px;vertical-align:middle"> ดูรูปภาพเดิม</a>')+'<button type="button" data-remove-maintenance-pdf="'+i+'">ลบรูปภาพ</button>'; }
-    if(file)html+='<span class="pending">เลือกรูปใหม่: '+esc(file.name)+'</span>';
-    if(maintenancePdfRemovals[i]&&!file)html+='<span class="pending">รูปเดิมจะถูกลบเมื่อกดบันทึก</span>';
+    saved.forEach(path=>{
+      const url=maintenancePdfPublicUrl(path),isRemoved=removed.includes(path);
+      html+='<span style="display:inline-flex;align-items:center;gap:5px;margin:4px;padding:5px;border:1px solid #dbe5ef;border-radius:8px;'+(isRemoved?'opacity:.4;text-decoration:line-through':'')+'"><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer"><img src="'+esc(url)+'" alt="Maintenance '+(i+1)+'" style="width:76px;height:58px;object-fit:cover;border-radius:5px;vertical-align:middle"></a><button type="button" data-remove-maintenance-image="'+i+'" data-path="'+esc(path)+'">'+(isRemoved?'ทำเครื่องหมายลบแล้ว':'ลบ')+'</button></span>';
+    });
+    if(files.length)html+='<div class="pending">เลือกรูปใหม่ '+files.length+' รูป: '+files.map(f=>esc(f.name)).join(', ')+'</div>';
     if(!html)html='<span>ยังไม่มีรูปภาพ</span>';
     box.innerHTML=html;
   });
 }
-function setMaintenancePdfPaths(paths){maintenancePdfPaths=Array.from({length:4},(_,i)=>(paths&&paths[i])||'');maintenancePdfRemovals=[false,false,false,false];maintenancePdfInputIds.forEach(id=>$(id).value='');renderMaintenancePdfStatus();}
+function setMaintenancePdfPaths(paths){
+  maintenanceImagePaths=Array.from({length:4},(_,i)=>Array.isArray(paths&&paths[i])?paths[i].slice():paths&&paths[i]?[paths[i]]:[]);
+  maintenanceImageRemovals=[[],[],[],[]];
+  maintenancePdfInputIds.forEach(id=>$(id).value='');
+  renderMaintenancePdfStatus();
+}
 function validateMaintenancePdfInputs(){
-  for(let i=0;i<4;i++){const file=$(maintenancePdfInputIds[i]).files&&$(maintenancePdfInputIds[i]).files[0];if(!file)continue;const isImage=['image/jpeg','image/png','image/webp'].includes(file.type)||/\.(jpe?g|png|webp)$/i.test(file.name);if(!isImage){msg('formMsg','ไฟล์ครั้งที่ '+(i+1)+' ต้องเป็น JPG, PNG หรือ WEBP เท่านั้น');return false;}if(file.size>10*1024*1024){msg('formMsg','รูปภาพครั้งที่ '+(i+1)+' มีขนาดเกิน 10 MB');return false;}}
+  for(let i=0;i<4;i++)for(const file of Array.from($(maintenancePdfInputIds[i]).files||[])){
+    const isImage=['image/jpeg','image/png','image/webp'].includes(file.type)||/\.(jpe?g|png|webp)$/i.test(file.name);
+    if(!isImage){msg('formMsg','รูปครั้งที่ '+(i+1)+' ต้องเป็น JPG, PNG หรือ WEBP เท่านั้น');return false;}
+    if(file.size>10*1024*1024){msg('formMsg','รูป '+file.name+' มีขนาดเกิน 10 MB');return false;}
+  }
   return true;
 }
 async function uploadMaintenancePdfs(recordId){
-  const paths=[...maintenancePdfPaths],uploaded=[],removeAfterSave=[];
-  for(let i=0;i<4;i++){
-    if(maintenancePdfRemovals[i]){if(paths[i])removeAfterSave.push(paths[i]);paths[i]='';}
-    const file=$(maintenancePdfInputIds[i]).files&&$(maintenancePdfInputIds[i]).files[0];
-    if(!file)continue;
-    if(paths[i])removeAfterSave.push(paths[i]);
-    const ext=(file.name.split('.').pop()||'jpg').toLowerCase();const path='warranty-maintenance/'+recordId+'/maintenance-'+(i+1)+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)+'.'+ext;
+  const paths=activeMaintenancePdfPaths(),uploaded=[],removeAfterSave=maintenanceImagePaths.flat().filter(path=>!paths.some(list=>list.includes(path)));
+  for(let i=0;i<4;i++)for(const file of Array.from($(maintenancePdfInputIds[i]).files||[])){
+    const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+    const path='warranty-maintenance/'+recordId+'/maintenance-'+(i+1)+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.'+ext;
     const {error}=await sb.storage.from(MAINTENANCE_BUCKET).upload(path,file,{contentType:file.type||'image/jpeg',cacheControl:'3600',upsert:false});
-    if(error){if(uploaded.length)await sb.storage.from(MAINTENANCE_BUCKET).remove(uploaded);return{error,index:i,paths:maintenancePdfPaths};}
-    uploaded.push(path);paths[i]=path;
+    if(error){if(uploaded.length)await sb.storage.from(MAINTENANCE_BUCKET).remove(uploaded);return{error,index:i,paths:maintenanceImagePaths};}
+    uploaded.push(path);paths[i].push(path);
   }
   return{paths,uploaded,removeAfterSave};
 }
@@ -132,7 +143,7 @@ $('warrantyForm').addEventListener('submit',async e=>{
   const recordId=result.data&&result.data.id||id;
   if(!recordId){msg('formMsg','บันทึกข้อมูลแล้ว แต่ไม่สามารถอ่านรหัสใบรับประกันกลับมาได้ กรุณารีเฟรชและตรวจสอบรายการ');await load();return;}
   $('id').value=recordId;
-  const docResult=p.job_type==='CCTV'?await uploadMaintenancePdfs(recordId):{paths:maintenancePdfPaths,uploaded:[],removeAfterSave:[]};
+  const docResult=p.job_type==='CCTV'?await uploadMaintenancePdfs(recordId):{paths:maintenanceImagePaths,uploaded:[],removeAfterSave:[]};
   if(docResult.error){
     await load();
     $('id').value=recordId;
@@ -174,7 +185,7 @@ window.editRow=id=>{
   const parsed=splitMaintenanceTerms(r.terms);
   fields.forEach(k=>$(k).value=k==='terms'?parsed.terms:(r[k]??''));
   setMaintenanceDates(parsed.dates);
-  setMaintenancePdfPaths(parsed.pdfs);
+  setMaintenancePdfPaths(parsed.images);
   loadEquipment(r);
   $('formTitle').textContent='แก้ไขใบรับประกัน '+r.warranty_code;
   window.scrollTo({top:0,behavior:'smooth'});
@@ -190,17 +201,17 @@ $('csvBtn').onclick=()=>{const csv=['รหัส,ชื่อลูกค้า
 $('addEquipmentBtn').onclick=()=>addEquipment();
 $('job_type').addEventListener('change',syncMaintenanceVisibility);
 maintenancePdfInputIds.forEach((id,i)=>$(id).addEventListener('change',()=>{
-  const file=$(id).files&&$(id).files[0];
-  if(file){const ok=['image/jpeg','image/png','image/webp'].includes(file.type)||/\.(jpe?g|png|webp)$/i.test(file.name);if(!ok){alert('กรุณาเลือกไฟล์ JPG, PNG หรือ WEBP เท่านั้น');$(id).value='';}else if(file.size>10*1024*1024){alert('รูปภาพครั้งที่ '+(i+1)+' ต้องมีขนาดไม่เกิน 10 MB');$(id).value='';}}
+  const files=Array.from($(id).files||[]);
+  const invalid=files.find(file=>!((['image/jpeg','image/png','image/webp'].includes(file.type)||/\.(jpe?g|png|webp)$/i.test(file.name))&&file.size<=10*1024*1024));
+  if(invalid){alert('ไฟล์ '+invalid.name+' ไม่ถูกต้อง รองรับ JPG, PNG หรือ WEBP ขนาดไม่เกิน 10 MB ต่อรูป');$(id).value='';}
   renderMaintenancePdfStatus();
 }));
 $('maintenanceDocuments').addEventListener('click',e=>{
-  const btn=e.target.closest('[data-remove-maintenance-pdf]');if(!btn)return;
-  const index=Number(btn.dataset.removeMaintenancePdf);
-  if(!Number.isInteger(index)||index<0||index>3)return;
-  if(!confirm('ถอดเอกสาร Maintenance ครั้งที่ '+(index+1)+' ออกจากหน้าแสดงผลลูกค้า?'))return;
-  maintenancePdfRemovals[index]=true;
-  $(maintenancePdfInputIds[index]).value='';
+  const btn=e.target.closest('[data-remove-maintenance-image]');if(!btn)return;
+  const visit=Number(btn.dataset.removeMaintenanceImage),path=btn.dataset.path;
+  if(!Number.isInteger(visit)||visit<0||visit>3||!path)return;
+  if(!confirm('ทำเครื่องหมายลบรูปภาพ Maintenance ครั้งที่ '+(visit+1)+' นี้?'))return;
+  if(!maintenanceImageRemovals[visit].includes(path))maintenanceImageRemovals[visit].push(path);
   renderMaintenancePdfStatus();
 });
 syncMaintenanceVisibility();setMaintenancePdfPaths([]);addEquipment();
