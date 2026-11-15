@@ -92,8 +92,8 @@ async function uploadMaintenancePdfs(recordId){
     const file=$(maintenancePdfInputIds[i]).files&&$(maintenancePdfInputIds[i]).files[0];
     if(!file)continue;
     if(paths[i])removeAfterSave.push(paths[i]);
-    const path='warranty-maintenance/'+recordId+'/maintenance-'+(i+1)+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)+'.pdf';
-    const {error}=await sb.storage.from(MAINTENANCE_BUCKET).upload(path,file,{contentType:'application/pdf',cacheControl:'3600',upsert:false});
+    const ext=(file.name.split('.').pop()||'jpg').toLowerCase();const path='warranty-maintenance/'+recordId+'/maintenance-'+(i+1)+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)+'.'+ext;
+    const {error}=await sb.storage.from(MAINTENANCE_BUCKET).upload(path,file,{contentType:file.type||'image/jpeg',cacheControl:'3600',upsert:false});
     if(error){if(uploaded.length)await sb.storage.from(MAINTENANCE_BUCKET).remove(uploaded);return{error,index:i,paths:maintenancePdfPaths};}
     uploaded.push(path);paths[i]=path;
   }
