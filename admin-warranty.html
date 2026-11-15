@@ -22,12 +22,12 @@
     <div class="field"><label for="maintenance_date_4">วันเข้าบำรุงรักษา ครั้งที่ 4</label><input id="maintenance_date_4" type="date"></div>
   </div>
   <div class="maintenance-documents-grid" id="maintenanceDocuments">
-    <div class="maintenance-doc-item"><label for="maintenance_pdf_1">เอกสาร Maintenance ครั้งที่ 1 (PDF)</label><input id="maintenance_pdf_1" type="file" accept="application/pdf,.pdf"><div class="maintenance-file-status" id="maintenance_pdf_status_1">ยังไม่มีเอกสาร PDF</div></div>
-    <div class="maintenance-doc-item"><label for="maintenance_pdf_2">เอกสาร Maintenance ครั้งที่ 2 (PDF)</label><input id="maintenance_pdf_2" type="file" accept="application/pdf,.pdf"><div class="maintenance-file-status" id="maintenance_pdf_status_2">ยังไม่มีเอกสาร PDF</div></div>
-    <div class="maintenance-doc-item"><label for="maintenance_pdf_3">เอกสาร Maintenance ครั้งที่ 3 (PDF)</label><input id="maintenance_pdf_3" type="file" accept="application/pdf,.pdf"><div class="maintenance-file-status" id="maintenance_pdf_status_3">ยังไม่มีเอกสาร PDF</div></div>
-    <div class="maintenance-doc-item"><label for="maintenance_pdf_4">เอกสาร Maintenance ครั้งที่ 4 (PDF)</label><input id="maintenance_pdf_4" type="file" accept="application/pdf,.pdf"><div class="maintenance-file-status" id="maintenance_pdf_status_4">ยังไม่มีเอกสาร PDF</div></div>
+    <div class="maintenance-doc-item"><label for="maintenance_pdf_1">รูปภาพ Maintenance ครั้งที่ 1</label><input id="maintenance_pdf_1" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"><div class="maintenance-file-status" id="maintenance_pdf_status_1">ยังไม่มีรูปภาพ</div></div>
+    <div class="maintenance-doc-item"><label for="maintenance_pdf_2">รูปภาพ Maintenance ครั้งที่ 2</label><input id="maintenance_pdf_2" type="file" accept="application/pdf,.pdf"><div class="maintenance-file-status" id="maintenance_pdf_status_2">ยังไม่มีเอกสาร PDF</div></div>
+    <div class="maintenance-doc-item"><label for="maintenance_pdf_3">รูปภาพ Maintenance ครั้งที่ 3</label><input id="maintenance_pdf_3" type="file" accept="application/pdf,.pdf"><div class="maintenance-file-status" id="maintenance_pdf_status_3">ยังไม่มีเอกสาร PDF</div></div>
+    <div class="maintenance-doc-item"><label for="maintenance_pdf_4">รูปภาพ Maintenance ครั้งที่ 4</label><input id="maintenance_pdf_4" type="file" accept="application/pdf,.pdf"><div class="maintenance-file-status" id="maintenance_pdf_status_4">ยังไม่มีเอกสาร PDF</div></div>
   </div>
-  <small class="maintenance-note">เลือกไฟล์ PDF แยกตามครั้งที่เข้าบำรุงรักษา ลูกค้าจะเห็นเฉพาะครั้งที่มีเอกสารแนบเท่านั้น (รองรับไฟล์ไม่เกิน 20 MB ต่อไฟล์)</small>
+  <small class="maintenance-note">เลือกรูปภาพ JPG, PNG หรือ WEBP แยกตามครั้งที่เข้าบำรุงรักษา ลูกค้าจะเห็นเฉพาะครั้งที่มีรูปแนบ (ไม่เกิน 10 MB ต่อรูป)</small>
 </div>
 </div>
 <div class="field"><label>วันที่ซื้อ</label><input id="purchase_date" type="date"></div><div class="field"><label>วันที่ติดตั้ง</label><input id="installation_date" type="date"></div><div class="field"><label>จำนวนอุปกรณ์</label><input id="quantity" type="number" min="0"></div>
@@ -46,14 +46,14 @@ const maintenanceIds=['maintenance_date_1','maintenance_date_2','maintenance_dat
 const maintenancePdfInputIds=['maintenance_pdf_1','maintenance_pdf_2','maintenance_pdf_3','maintenance_pdf_4'];
 const MAINTENANCE_BUCKET='portfolio-images';
 const maintenanceMarker=/\[\[AN_MAINTENANCE_SCHEDULE:([^\]]*)\]\]/;
-const maintenancePdfsMarker=/\[\[AN_MAINTENANCE_PDFS:([^\]]*)\]\]/;
+const maintenancePdfsMarker=/\[\[AN_MAINTENANCE_PDFS:([^\]]*)\]\]/;\nconst maintenanceImagesMarker=/\[\[AN_MAINTENANCE_IMAGES:([^\]]*)\]\]/;
 let maintenancePdfPaths=['','','',''];
 let maintenancePdfRemovals=[false,false,false,false];
 function splitMaintenanceTerms(raw){
-  const text=String(raw||''),schedule=text.match(maintenanceMarker),docs=text.match(maintenancePdfsMarker);
+  const text=String(raw||''),schedule=text.match(maintenanceMarker),docs=text.match(maintenanceImagesMarker)||text.match(maintenancePdfsMarker);
   const dates=schedule?schedule[1].split('|').slice(0,4):[],pdfs=docs?docs[1].split('|').slice(0,4):[];
   while(dates.length<4)dates.push('');while(pdfs.length<4)pdfs.push('');
-  const terms=text.replace(maintenanceMarker,'').replace(maintenancePdfsMarker,'').replace(/\n{3,}/g,'\n\n').trim();
+  const terms=text.replace(maintenanceMarker,'').replace(maintenancePdfsMarker,'').replace(maintenanceImagesMarker,'').replace(/\n{3,}/g,'\n\n').trim();
   return{terms,dates,pdfs};
 }
 function activeMaintenancePdfPaths(){return maintenancePdfPaths.map((path,i)=>maintenancePdfRemovals[i]?'':path);}
@@ -62,7 +62,7 @@ function withMaintenanceTerms(raw,jobType,dates,pdfPaths){
   if(jobType!=='CCTV')return clean;
   const markers=[];
   if(selected.some(Boolean))markers.push('[[AN_MAINTENANCE_SCHEDULE:'+selected.join('|')+']]');
-  if(docs.some(Boolean))markers.push('[[AN_MAINTENANCE_PDFS:'+docs.join('|')+']]');
+  if(docs.some(Boolean))markers.push('[[AN_MAINTENANCE_IMAGES:'+docs.join('|')+']]');
   return clean+(markers.length?(clean?'\n\n':'')+markers.join(''):'');
 }
 function maintenanceDates(){return maintenanceIds.map(id=>$(id).value||'');}
@@ -73,16 +73,16 @@ function renderMaintenancePdfStatus(){
   maintenancePdfInputIds.forEach((id,i)=>{
     const box=$('maintenance_pdf_status_'+(i+1)),file=$(id).files&&$(id).files[0],saved=maintenancePdfPaths[i]&&!maintenancePdfRemovals[i];
     let html='';
-    if(saved)html+='<a href="'+esc(maintenancePdfPublicUrl(maintenancePdfPaths[i]))+'" target="_blank" rel="noopener noreferrer">เปิด PDF ที่บันทึกไว้</a><button type="button" data-remove-maintenance-pdf="'+i+'">ถอดเอกสาร</button>';
-    if(file)html+='<span class="pending">เลือกไฟล์ใหม่: '+esc(file.name)+'</span>';
-    if(maintenancePdfRemovals[i]&&!file)html+='<span class="pending">เอกสารเดิมจะถูกถอดเมื่อกดบันทึก</span>';
-    if(!html)html='<span>ยังไม่มีเอกสาร PDF</span>';
+    if(saved){const url=maintenancePdfPublicUrl(maintenancePdfPaths[i]);const isOldPdf=maintenancePdfPaths[i].toLowerCase().endsWith('.pdf');html+=(isOldPdf?'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">เปิดเอกสาร PDF เดิม</a>':'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer"><img src="'+esc(url)+'" alt="Maintenance '+(i+1)+'" style="width:76px;height:58px;object-fit:cover;border:1px solid #dbe5ef;border-radius:7px;vertical-align:middle"> ดูรูปภาพเดิม</a>')+'<button type="button" data-remove-maintenance-pdf="'+i+'">ลบรูปภาพ</button>'; }
+    if(file)html+='<span class="pending">เลือกรูปใหม่: '+esc(file.name)+'</span>';
+    if(maintenancePdfRemovals[i]&&!file)html+='<span class="pending">รูปเดิมจะถูกลบเมื่อกดบันทึก</span>';
+    if(!html)html='<span>ยังไม่มีรูปภาพ</span>';
     box.innerHTML=html;
   });
 }
 function setMaintenancePdfPaths(paths){maintenancePdfPaths=Array.from({length:4},(_,i)=>(paths&&paths[i])||'');maintenancePdfRemovals=[false,false,false,false];maintenancePdfInputIds.forEach(id=>$(id).value='');renderMaintenancePdfStatus();}
 function validateMaintenancePdfInputs(){
-  for(let i=0;i<4;i++){const file=$(maintenancePdfInputIds[i]).files&&$(maintenancePdfInputIds[i]).files[0];if(!file)continue;const isPdf=file.type==='application/pdf'||/\.pdf$/i.test(file.name);if(!isPdf){msg('formMsg','ไฟล์ครั้งที่ '+(i+1)+' ต้องเป็น PDF เท่านั้น');return false;}if(file.size>20*1024*1024){msg('formMsg','ไฟล์ PDF ครั้งที่ '+(i+1)+' มีขนาดเกิน 20 MB');return false;}}
+  for(let i=0;i<4;i++){const file=$(maintenancePdfInputIds[i]).files&&$(maintenancePdfInputIds[i]).files[0];if(!file)continue;const isImage=['image/jpeg','image/png','image/webp'].includes(file.type)||/\.(jpe?g|png|webp)$/i.test(file.name);if(!isImage){msg('formMsg','ไฟล์ครั้งที่ '+(i+1)+' ต้องเป็น JPG, PNG หรือ WEBP เท่านั้น');return false;}if(file.size>10*1024*1024){msg('formMsg','รูปภาพครั้งที่ '+(i+1)+' มีขนาดเกิน 10 MB');return false;}}
   return true;
 }
 async function uploadMaintenancePdfs(recordId){
@@ -136,7 +136,7 @@ $('warrantyForm').addEventListener('submit',async e=>{
     await load();
     $('id').value=recordId;
     $('formTitle').textContent='แก้ไขใบรับประกัน '+p.warranty_code;
-    msg('formMsg','บันทึกข้อมูลใบรับประกันแล้ว แต่แนบ PDF ครั้งที่ '+(docResult.index+1)+' ไม่สำเร็จ: '+docResult.error.message+' กรุณาตรวจสอบสิทธิ์ Storage แล้วกดบันทึกอีกครั้ง');
+    msg('formMsg','บันทึกข้อมูลใบรับประกันแล้ว แต่แนบรูปภาพครั้งที่ '+(docResult.index+1)+' ไม่สำเร็จ: '+docResult.error.message+' กรุณาตรวจสอบสิทธิ์ Storage แล้วกดบันทึกอีกครั้ง');
     return;
   }
   const finalTerms=withMaintenanceTerms(p.terms,p.job_type,maintenanceDates(),docResult.paths);
@@ -147,14 +147,14 @@ $('warrantyForm').addEventListener('submit',async e=>{
       await load();
       $('id').value=recordId;
       $('formTitle').textContent='แก้ไขใบรับประกัน '+p.warranty_code;
-      msg('formMsg','อัปโหลด PDF แล้ว แต่บันทึกการเชื่อมโยงไฟล์ไม่สำเร็จ: '+meta.error.message+' กรุณากดบันทึกอีกครั้ง');
+      msg('formMsg','อัปโหลดรูปภาพแล้ว แต่บันทึกการเชื่อมโยงไฟล์ไม่สำเร็จ: '+meta.error.message+' กรุณากดบันทึกอีกครั้ง');
       return;
     }
   }
   const removeError=await removeOldMaintenancePdfs(docResult.removeAfterSave);
   setMaintenancePdfPaths(docResult.paths);
   await load();
-  msg('formMsg',removeError?'บันทึกข้อมูลเรียบร้อย แต่ไฟล์เดิมบางไฟล์ไม่สามารถลบออกจาก Storage ได้ (จะไม่แสดงให้ลูกค้าเห็นแล้ว)':'บันทึกข้อมูลและเอกสาร Maintenance เรียบร้อย');
+  msg('formMsg',removeError?'บันทึกข้อมูลเรียบร้อย แต่ไฟล์เดิมบางไฟล์ไม่สามารถลบออกจาก Storage ได้ (จะไม่แสดงให้ลูกค้าเห็นแล้ว)':'บันทึกข้อมูลและรูปภาพ Maintenance เรียบร้อย');
   clearForm();
 });
 function clearForm(){
@@ -190,7 +190,7 @@ $('addEquipmentBtn').onclick=()=>addEquipment();
 $('job_type').addEventListener('change',syncMaintenanceVisibility);
 maintenancePdfInputIds.forEach((id,i)=>$(id).addEventListener('change',()=>{
   const file=$(id).files&&$(id).files[0];
-  if(file&&file.size>20*1024*1024){alert('ไฟล์ PDF ครั้งที่ '+(i+1)+' ต้องมีขนาดไม่เกิน 20 MB');$(id).value='';}
+  if(file){const ok=['image/jpeg','image/png','image/webp'].includes(file.type)||/\.(jpe?g|png|webp)$/i.test(file.name);if(!ok){alert('กรุณาเลือกไฟล์ JPG, PNG หรือ WEBP เท่านั้น');$(id).value='';}else if(file.size>10*1024*1024){alert('รูปภาพครั้งที่ '+(i+1)+' ต้องมีขนาดไม่เกิน 10 MB');$(id).value='';}}
   renderMaintenancePdfStatus();
 }));
 $('maintenanceDocuments').addEventListener('click',e=>{
