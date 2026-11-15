@@ -210,7 +210,7 @@ $('forgotPasswordBtn').onclick=async()=>{
   if(!url||!key||!email){msg('loginMsg','กรุณากรอก Supabase URL, Publishable Key และอีเมล Admin ก่อนส่งลิงก์');return;}
   try{
     sb=window.supabase.createClient(url,key);
-    const redirectTo=location.origin+location.pathname.replace(/admin-warranty\\.html$/,'update-password.html');
+    const redirectTo=location.origin+location.pathname.replace('admin-warranty.html','update-password.html');
     const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
     if(error){msg('loginMsg','ส่งลิงก์ไม่สำเร็จ: '+error.message);return;}
     localStorage.setItem('an_supabase_url',url);localStorage.setItem('an_supabase_key',key);
