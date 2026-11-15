@@ -115,10 +115,69 @@ function showApp(){$('loginPanel').classList.add('hidden');$('app').classList.re
 async function load(){const {data,error}=await sb.from('warranties').select('*').order('created_at',{ascending:false}).limit(1000);if(error){msg('formMsg','โหลดข้อมูลไม่สำเร็จ: '+error.message);return}records=data||[];render()}
 function render(){const q=$('search').value.toLowerCase();const list=records.filter(r=>[r.warranty_code,r.customer_name,r.phone].some(x=>(x||'').toLowerCase().includes(q)));$('total').textContent=records.length;$('active').textContent=records.filter(r=>statusText(r)==='อยู่ในประกัน').length;$('expired').textContent=records.filter(r=>['หมดประกัน','ยกเลิก'].includes(statusText(r))).length;$('rows').innerHTML=list.map(r=>'<tr><td>'+esc(r.warranty_code)+'</td><td>'+esc(r.customer_name)+'</td><td>'+esc(r.phone)+'</td><td>'+esc(r.job_type)+'</td><td>'+date(r.product_warranty_end)+'</td><td>'+date(r.installation_warranty_end)+'</td><td>'+statusText(r)+'</td><td><div class="actions"><button class="btn secondary" onclick="editRow(\''+r.id+'\')">แก้ไข</button><button class="btn green" onclick="printRow(\''+r.id+'\')">PDF</button><button class="btn red" onclick="deleteRow(\''+r.id+'\')">ลบ</button></div></td></tr>').join('')}
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-$('warrantyForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('id').value,p={};syncEquipment();fields.forEach(k=>{let v=$(k).value.trim();p[k]=v===''?null:v});p.quantity=p.quantity?Number(p.quantity):null;if(!validateMaintenanceSchedule())return;p.terms=withMaintenanceTerms(p.terms,p.job_type,maintenanceDates());p.updated_at=new Date().toISOString();let result=id?await sb.from('warranties').update(p).eq('id',id):await sb.from('warranties').insert(p);if(result.error){msg('formMsg','บันทึกไม่สำเร็จ: '+result.error.message);return}msg('formMsg','บันทึกข้อมูลเรียบร้อย');clearForm();await load()});
-function clearForm(){$('warrantyForm').reset();$('id').value='';$('formTitle').textContent='เพิ่มใบรับประกัน';setMaintenanceDates([]);equipmentList=[];renderEquipment()}
+$('warrantyForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!validateMaintenanceSchedule()||!validateMaintenancePdfInputs())return;
+  const id=$('id').value,p={};
+  syncEquipment();
+  fields.forEach(k=>{let v=$(k).value.trim();p[k]=v===''?null:v});
+  p.quantity=p.quantity?Number(p.quantity):null;
+  p.terms=withMaintenanceTerms(p.terms,p.job_type,maintenanceDates(),activeMaintenancePdfPaths());
+  p.updated_at=new Date().toISOString();
+  const result=id
+    ? await sb.from('warranties').update(p).eq('id',id).select('id').single()
+    : await sb.from('warranties').insert(p).select('id').single();
+  if(result.error){msg('formMsg','บันทึกไม่สำเร็จ: '+result.error.message);return;}
+  const recordId=result.data&&result.data.id||id;
+  if(!recordId){msg('formMsg','บันทึกข้อมูลแล้ว แต่ไม่สามารถอ่านรหัสใบรับประกันกลับมาได้ กรุณารีเฟรชและตรวจสอบรายการ');await load();return;}
+  $('id').value=recordId;
+  const docResult=p.job_type==='CCTV'?await uploadMaintenancePdfs(recordId):{paths:maintenancePdfPaths,uploaded:[],removeAfterSave:[]};
+  if(docResult.error){
+    await load();
+    $('id').value=recordId;
+    $('formTitle').textContent='แก้ไขใบรับประกัน '+p.warranty_code;
+    msg('formMsg','บันทึกข้อมูลใบรับประกันแล้ว แต่แนบ PDF ครั้งที่ '+(docResult.index+1)+' ไม่สำเร็จ: '+docResult.error.message+' กรุณาตรวจสอบสิทธิ์ Storage แล้วกดบันทึกอีกครั้ง');
+    return;
+  }
+  const finalTerms=withMaintenanceTerms(p.terms,p.job_type,maintenanceDates(),docResult.paths);
+  if(finalTerms!==p.terms){
+    const meta=await sb.from('warranties').update({terms:finalTerms,updated_at:new Date().toISOString()}).eq('id',recordId);
+    if(meta.error){
+      if(docResult.uploaded&&docResult.uploaded.length)await sb.storage.from(MAINTENANCE_BUCKET).remove(docResult.uploaded);
+      await load();
+      $('id').value=recordId;
+      $('formTitle').textContent='แก้ไขใบรับประกัน '+p.warranty_code;
+      msg('formMsg','อัปโหลด PDF แล้ว แต่บันทึกการเชื่อมโยงไฟล์ไม่สำเร็จ: '+meta.error.message+' กรุณากดบันทึกอีกครั้ง');
+      return;
+    }
+  }
+  const removeError=await removeOldMaintenancePdfs(docResult.removeAfterSave);
+  setMaintenancePdfPaths(docResult.paths);
+  await load();
+  msg('formMsg',removeError?'บันทึกข้อมูลเรียบร้อย แต่ไฟล์เดิมบางไฟล์ไม่สามารถลบออกจาก Storage ได้ (จะไม่แสดงให้ลูกค้าเห็นแล้ว)':'บันทึกข้อมูลและเอกสาร Maintenance เรียบร้อย');
+  clearForm();
+});
+function clearForm(){
+  $('warrantyForm').reset();
+  $('id').value='';
+  $('formTitle').textContent='เพิ่มใบรับประกัน';
+  setMaintenanceDates([]);
+  setMaintenancePdfPaths([]);
+  equipmentList=[];
+  renderEquipment();
+}
 $('clearBtn').onclick=clearForm;
-window.editRow=id=>{const r=records.find(x=>x.id===id);if(!r)return;$('id').value=id;const parsed=splitMaintenanceTerms(r.terms);fields.forEach(k=>$(k).value=k==='terms'?parsed.terms:(r[k]??''));setMaintenanceDates(parsed.dates);loadEquipment(r);$('formTitle').textContent='แก้ไขใบรับประกัน '+r.warranty_code;window.scrollTo({top:0,behavior:'smooth'})};
+window.editRow=id=>{
+  const r=records.find(x=>x.id===id);if(!r)return;
+  $('id').value=id;
+  const parsed=splitMaintenanceTerms(r.terms);
+  fields.forEach(k=>$(k).value=k==='terms'?parsed.terms:(r[k]??''));
+  setMaintenanceDates(parsed.dates);
+  setMaintenancePdfPaths(parsed.pdfs);
+  loadEquipment(r);
+  $('formTitle').textContent='แก้ไขใบรับประกัน '+r.warranty_code;
+  window.scrollTo({top:0,behavior:'smooth'});
+};
 window.deleteRow=async id=>{if(!confirm('ยืนยันลบใบรับประกันรายการนี้?'))return;const {error}=await sb.from('warranties').delete().eq('id',id);if(error){alert(error.message);return}await load()};
 function printRow(id){const r=records.find(x=>x.id===id);if(!r)return;printRecord(r)}
 function equipmentPrintRows(r){const b=String(r.product_brand||'').split('\\n'),m=String(r.product_model||'').split('\\n'),s=String(r.serial_numbers||'').split('\\n');return Array.from({length:Math.max(b.length,m.length,s.length,1)},(_,i)=>'<tr><td style="border:1px solid #ccd5df;padding:6px">'+esc(b[i]||'—')+'</td><td style="border:1px solid #ccd5df;padding:6px">'+esc(m[i]||'—')+'</td><td style="border:1px solid #ccd5df;padding:6px">'+esc(s[i]||'—')+'</td></tr>').join('')}
@@ -127,7 +186,23 @@ function printRecord(r){$('printArea').classList.remove('hidden');$('printConten
 $('pdfBtn').onclick=()=>{const id=$('id').value;if(id)printRow(id);else{syncEquipment();const p={};fields.forEach(k=>p[k]=$(k).value);if(!validateMaintenanceSchedule())return;p.terms=withMaintenanceTerms(p.terms,p.job_type,maintenanceDates());if(!p.warranty_code||!p.customer_name){alert('กรอกข้อมูลและบันทึกใบรับประกันก่อนพิมพ์');return}printRecord(p)}};
 $('search').oninput=render;$('refreshBtn').onclick=load;
 $('csvBtn').onclick=()=>{const csv=['รหัส,ชื่อลูกค้า,เบอร์,ประเภท,ประกันสินค้าเริ่ม,ประกันสินค้าสิ้นสุด,ประกันติดตั้งเริ่ม,ประกันติดตั้งสิ้นสุด',...records.map(r=>[r.warranty_code,r.customer_name,r.phone,r.job_type,r.product_warranty_start,r.product_warranty_end,r.installation_warranty_start,r.installation_warranty_end].map(x=>'"'+String(x||'').replace(/"/g,'""')+'"').join(','))].join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='advance-warranties.csv';a.click()};
-$('addEquipmentBtn').onclick=()=>addEquipment();$('job_type').addEventListener('change',syncMaintenanceVisibility);syncMaintenanceVisibility();addEquipment();
+$('addEquipmentBtn').onclick=()=>addEquipment();
+$('job_type').addEventListener('change',syncMaintenanceVisibility);
+maintenancePdfInputIds.forEach((id,i)=>$(id).addEventListener('change',()=>{
+  const file=$(id).files&&$(id).files[0];
+  if(file&&file.size>20*1024*1024){alert('ไฟล์ PDF ครั้งที่ '+(i+1)+' ต้องมีขนาดไม่เกิน 20 MB');$(id).value='';}
+  renderMaintenancePdfStatus();
+}));
+$('maintenanceDocuments').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-remove-maintenance-pdf]');if(!btn)return;
+  const index=Number(btn.dataset.removeMaintenancePdf);
+  if(!Number.isInteger(index)||index<0||index>3)return;
+  if(!confirm('ถอดเอกสาร Maintenance ครั้งที่ '+(index+1)+' ออกจากหน้าแสดงผลลูกค้า?'))return;
+  maintenancePdfRemovals[index]=true;
+  $(maintenancePdfInputIds[index]).value='';
+  renderMaintenancePdfStatus();
+});
+syncMaintenanceVisibility();setMaintenancePdfPaths([]);addEquipment();
 $('loginBtn').onclick=login;$('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload()};
 const url=localStorage.getItem('an_supabase_url'),key=localStorage.getItem('an_supabase_key');if(url&&key){$('projectUrl').value=url;$('anonKey').value=key}
 </script></body></html>
