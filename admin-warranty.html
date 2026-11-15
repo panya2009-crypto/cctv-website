@@ -6,7 +6,7 @@
 </head><body>
 <header><div class="wrap top"><div class="brand" style="display:flex;align-items:center;gap:12px"><img src="assets/Advance%20Network%20CCTV%20Solutions%20Logo.png" alt="Advance Network" style="width:320px;height:76px;max-width:min(38vw,320px);object-fit:contain;background:transparent;border:0;border-radius:0;padding:0"><span>| จัดการประกัน</span></div><div class="toolbar no-print"><a href="index.html" style="color:white;font-size:12px">กลับเว็บไซต์</a><button id="logoutBtn" class="btn secondary hidden">ออกจากระบบ</button></div></div></header>
 <div class="wrap">
-<section id="loginPanel" class="panel"><h2>เข้าสู่ระบบผู้ดูแล</h2><p class="muted">ใช้บัญชีผู้ดูแล Supabase Auth</p><div class="grid"><div class="field"><label>Supabase Project URL</label><input id="projectUrl" placeholder="https://xxxxx.supabase.co"></div><div class="field"><label>Supabase anon / publishable key</label><input id="anonKey" placeholder="ใส่ public anon key"></div><div class="field"><label>อีเมล Admin</label><input id="email" type="email"></div><div class="field"><label>รหัสผ่าน</label><input id="password" type="password"></div></div><div class="toolbar" style="margin-top:14px"><button id="loginBtn" class="btn">เข้าสู่ระบบ</button></div><div id="loginMsg" class="message hidden"></div><p class="muted">ค่า URL และ public key จะบันทึกไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น</p></section>
+<section id="loginPanel" class="panel"><h2>เข้าสู่ระบบผู้ดูแล</h2><p class="muted">ใช้บัญชีผู้ดูแล Supabase Auth</p><div class="grid"><div class="field"><label>Supabase Project URL</label><input id="projectUrl" placeholder="https://xxxxx.supabase.co"></div><div class="field"><label>Supabase anon / publishable key</label><input id="anonKey" placeholder="ใส่ public anon key"></div><div class="field"><label>อีเมล Admin</label><input id="email" type="email"></div><div class="field"><label>รหัสผ่าน</label><input id="password" type="password"></div></div><div class="toolbar" style="margin-top:14px"><button id="loginBtn" class="btn" type="button">เข้าสู่ระบบ</button><button id="forgotPasswordBtn" class="btn secondary" type="button">ลืมรหัสผ่าน / ส่งลิงก์ตั้งใหม่</button></div><div id="loginMsg" class="message hidden"></div><p class="muted">ค่า URL และ public key จะบันทึกไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น</p></section>
 <section id="app" class="hidden">
 <div class="panel no-print"><div class="stats"><div class="stat">ใบรับประกันทั้งหมด<b id="total">0</b></div><div class="stat">ยังอยู่ในประกัน<b id="active">0</b></div><div class="stat">หมด/ยกเลิก<b id="expired">0</b></div></div></div>
 <section class="panel no-print"><h2 id="formTitle">เพิ่มใบรับประกัน</h2><form id="warrantyForm"><input id="id" type="hidden"><div class="grid">
@@ -46,7 +46,8 @@ const maintenanceIds=['maintenance_date_1','maintenance_date_2','maintenance_dat
 const maintenancePdfInputIds=['maintenance_pdf_1','maintenance_pdf_2','maintenance_pdf_3','maintenance_pdf_4'];
 const MAINTENANCE_BUCKET='portfolio-images';
 const maintenanceMarker=/\[\[AN_MAINTENANCE_SCHEDULE:([^\]]*)\]\]/;
-const maintenancePdfsMarker=/\[\[AN_MAINTENANCE_PDFS:([^\]]*)\]\]/;\nconst maintenanceImagesMarker=/\[\[AN_MAINTENANCE_IMAGES:([^\]]*)\]\]/;
+const maintenancePdfsMarker=/\[\[AN_MAINTENANCE_PDFS:([^\]]*)\]\]/;
+const maintenanceImagesMarker=/\[\[AN_MAINTENANCE_IMAGES:([^\]]*)\]\]/;
 let maintenancePdfPaths=['','','',''];
 let maintenancePdfRemovals=[false,false,false,false];
 function splitMaintenanceTerms(raw){
@@ -203,6 +204,18 @@ $('maintenanceDocuments').addEventListener('click',e=>{
   renderMaintenancePdfStatus();
 });
 syncMaintenanceVisibility();setMaintenancePdfPaths([]);addEquipment();
-$('loginBtn').onclick=login;$('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload()};
+$('loginBtn').onclick=login;
+$('forgotPasswordBtn').onclick=async()=>{
+  const url=$('projectUrl').value.trim(),key=$('anonKey').value.trim(),email=$('email').value.trim();
+  if(!url||!key||!email){msg('loginMsg','กรุณากรอก Supabase URL, Publishable Key และอีเมล Admin ก่อนส่งลิงก์');return;}
+  try{
+    sb=window.supabase.createClient(url,key);
+    const redirectTo=location.origin+location.pathname.replace(/admin-warranty\\.html$/,'update-password.html');
+    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+    if(error){msg('loginMsg','ส่งลิงก์ไม่สำเร็จ: '+error.message);return;}
+    localStorage.setItem('an_supabase_url',url);localStorage.setItem('an_supabase_key',key);
+    msg('loginMsg','ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว กรุณาเปิดอีเมลและกดลิงก์ล่าสุดภายในเวลาที่กำหนด');
+  }catch(err){msg('loginMsg','เกิดข้อผิดพลาด: '+(err.message||err));}
+};$('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload()};
 const url=localStorage.getItem('an_supabase_url'),key=localStorage.getItem('an_supabase_key');if(url&&key){$('projectUrl').value=url;$('anonKey').value=key}
 </script></body></html>
