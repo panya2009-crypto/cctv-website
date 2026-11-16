@@ -137,6 +137,7 @@ create policy "Store admins view order items"
 on public.used_order_items for select to authenticated
 using (public.is_store_admin());
 
+grant select on public.store_admins to authenticated;
 grant select on public.used_products to anon, authenticated;
 grant insert, update, delete on public.used_products to authenticated;
 grant select, update on public.used_orders to authenticated;
