@@ -89,7 +89,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const $=id=>document.getElementById(id);
 const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let products=[],cart=JSON.parse(localStorage.getItem(CART_KEY)||'[]'),activeCategory='';
-const categories=['กล้องวงจรปิด','เครื่องบันทึก NVR/DVR','Network / PoE Switch','Hard Disk / Storage','Access Control','อุปกรณ์เสริม','อื่น ๆ'];
+const categories=['กล้องวงจรปิด','เครื่องบันทึก NVR/DVR','Network / PoE Switch','Hard Disk / Storage','Access Control','สินค้าเป็นชุด','อุปกรณ์เสริม','อื่น ๆ'];
 function photoUrl(path){
  if(!path)return '';
  if(/^https?:\/\//i.test(path))return path;
@@ -115,7 +115,7 @@ function renderProducts(){
  }).join('');
 }
 function renderCategories(){
- const cats=[...new Set(products.map(p=>p.category).filter(Boolean))];
+ const cats=[...new Set([...categories,...products.map(p=>p.category).filter(Boolean)])];
  $('categorySelect').innerHTML='<option value="">ทุกหมวดสินค้า</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
  $('categoryButtons').innerHTML='<button class="category '+(!activeCategory?'active':'')+'" data-category="">ทั้งหมด</button>'+cats.map(c=>'<button class="category '+(activeCategory===c?'active':'')+'" data-category="'+esc(c)+'">'+esc(c)+'</button>').join('');
 }
